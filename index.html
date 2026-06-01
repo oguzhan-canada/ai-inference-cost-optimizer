@@ -1245,6 +1245,40 @@
       <h4>2. Batch Processing (50% savings)</h4>
       <p>Use batch for any non-real-time workload. All 5 providers offer ~50% off for batch. This is the easiest lever with zero quality tradeoff — the only cost is latency (typically 24h turnaround).</p>
 
+      <div class="provider-block" style="margin-top: 16px; margin-bottom: 20px;">
+        <h4 style="color: var(--accent); margin-bottom: 12px;">📌 The Easiest 50% You Will Ever Save</h4>
+        <p>Batch processing is the <strong>simplest and most risk-free cost lever</strong>. The quality of the output is identical — the model processes the same prompt and produces the same answer. The only difference is timing: instead of getting the response in seconds, you get it in hours. In exchange, providers charge you half price.</p>
+        <p style="margin-top: 10px;"><strong>Think of it like this:</strong> shipping a package. You can pay for next-day delivery or standard ground shipping. The package is the same, the destination is the same — you just wait a bit longer. Batch processing is the "ground shipping" of AI: same result, half the cost, but you cannot stand at the counter and watch it happen.</p>
+
+        <p style="margin-top: 14px; margin-bottom: 8px;"><strong>Is your workload batchable?</strong></p>
+        <table>
+          <thead><tr><th>Workload Type</th><th>Batchable?</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td>Chatbot responding to live users</td><td style="color: #f87171;">No</td><td>Users are waiting — they need a response in seconds</td></tr>
+            <tr><td>Nightly document processing</td><td style="color: #4ade80;">Yes ✅</td><td>Nobody is waiting — results needed by morning, not right now</td></tr>
+            <tr><td>Labeling a backlog of 10,000 records</td><td style="color: #4ade80;">Yes ✅</td><td>Bulk operation, no real-time requirement</td></tr>
+            <tr><td>Generating weekly reports</td><td style="color: #4ade80;">Yes ✅</td><td>Scheduled task — hours of delay are fine</td></tr>
+            <tr><td>Content moderation queue</td><td style="color: #facc15;">Maybe</td><td>Depends on SLA — if 1-hour turnaround is acceptable, batch works</td></tr>
+            <tr><td>Real-time search assistant</td><td style="color: #f87171;">No</td><td>User expects instant answers</td></tr>
+            <tr><td>Data extraction from uploaded files</td><td style="color: #4ade80;">Yes ✅</td><td>User uploads a file and checks back later — no need for instant processing</td></tr>
+          </tbody>
+        </table>
+
+        <p style="margin-top: 14px; margin-bottom: 8px;"><strong>How easy is it to set up?</strong></p>
+        <table>
+          <thead><tr><th>Provider</th><th>Setup Difficulty</th><th>How It Works</th><th>Discount</th><th>Turnaround</th></tr></thead>
+          <tbody>
+            <tr><td>OpenAI</td><td style="color: #4ade80;">Easy</td><td>Upload a JSONL file of requests, submit as a batch. Poll for completion or use a webhook.</td><td>50% off</td><td>Up to 24 hours</td></tr>
+            <tr><td>Anthropic (Claude)</td><td style="color: #4ade80;">Easy</td><td>Message Batches API — submit up to 10,000 requests. Results returned in a single response object.</td><td>50% off</td><td>Up to 24 hours</td></tr>
+            <tr><td>Google Gemini</td><td style="color: #4ade80;">Easy</td><td>BatchGenerateContent API. Also supports a "Flex" mode with shorter turnaround at similar discounts.</td><td>50% off</td><td>Up to 24 hours</td></tr>
+            <tr><td>Mistral</td><td style="color: #4ade80;">Easy</td><td>Batch inference API — upload JSONL, retrieve results when ready.</td><td>50% off</td><td>Up to 24 hours</td></tr>
+            <tr><td>Microsoft Foundry</td><td style="color: #4ade80;">Easy</td><td>Global Batch deployment — same OpenAI batch format, processed on Azure infrastructure.</td><td>50% off</td><td>Up to 24 hours</td></tr>
+          </tbody>
+        </table>
+
+        <p style="margin-top: 14px;"><strong>The key insight:</strong> most organizations have a mix of real-time and asynchronous workloads, but run <em>everything</em> through the real-time API because it is the path of least resistance. Simply identifying which workloads <strong>do not need instant responses</strong> and routing them to batch can cut your total bill by 25–40% with no quality impact and minimal engineering effort. If even 50% of your volume is batchable, that is a 25% reduction in your total spend — for what is often a one-day integration.</p>
+      </div>
+
       <h4>3. Prompt Caching (75–90% input savings)</h4>
       <p>Cache repeated prefixes — system prompts, policy documents, few-shot examples. Cached tokens are served at ~10% of base rate. Place static content at the beginning of prompts and keep prefixes identical to maximize hit rates.</p>
 
