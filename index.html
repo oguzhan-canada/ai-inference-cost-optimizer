@@ -1284,6 +1284,39 @@
 
       <h4>5. Token Optimization (10–30% savings)</h4>
       <p>Set <code>max_tokens</code>, remove unnecessary boilerplate, prefer structured outputs for machine-consumed responses. Summarize long documents before sending to expensive models.</p>
+
+      <div class="provider-block" style="margin-top: 16px; margin-bottom: 20px;">
+        <h4 style="color: var(--accent); margin-bottom: 12px;">📌 Why Every Token Counts</h4>
+        <p>AI providers charge per token — roughly one token per word. Every unnecessary word in your prompt <strong>costs money going in</strong>, and every extra word the model generates <strong>costs money coming out</strong> (output tokens are typically 3–10× more expensive than input). Most applications waste 20–40% of their token budget on content that does not improve the result.</p>
+        <p style="margin-top: 10px;"><strong>Think of it like this:</strong> you are sending a courier to deliver a message. You pay by the word — both for the instructions you write and the response they bring back. If your instructions include three paragraphs of context the courier does not need, and the response is a five-page essay when a three-line answer would do, you are overpaying for the same outcome.</p>
+
+        <p style="margin-top: 14px; margin-bottom: 8px;"><strong>Five practical techniques:</strong></p>
+        <table>
+          <thead><tr><th>Technique</th><th>Effort</th><th>Savings</th><th>How It Works</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Set <code>max_tokens</code></strong></td><td style="color: #4ade80;">One parameter</td><td>10–30%</td><td>Cap the response length so the model stops when the answer is complete instead of generating filler. If you need a yes/no answer, set max_tokens to 10 — not 4,000.</td></tr>
+            <tr><td><strong>Use structured output</strong></td><td style="color: #4ade80;">Small code change</td><td>20–50%</td><td>When the response is consumed by code (not humans), request JSON or a specific schema. The model produces compact, parseable output instead of verbose prose. OpenAI, Anthropic, and Gemini all support structured output modes.</td></tr>
+            <tr><td><strong>Trim prompt boilerplate</strong></td><td style="color: #facc15;">Prompt review</td><td>10–25%</td><td>Audit your prompts for repeated preambles, redundant examples, or overly verbose instructions. Teams often copy-paste prompt templates without removing sections that do not apply. Shorter prompts cost less and often produce better results.</td></tr>
+            <tr><td><strong>Pre-summarize long documents</strong></td><td style="color: #facc15;">Pipeline change</td><td>40–80%</td><td>Instead of sending a 50-page document to an expensive model, first summarize it with a cheap model (Ministral 3B, Phi-4 mini), then send the summary to the expensive model. You pay nano-tier rates for the bulk processing and flagship rates only for the refined analysis.</td></tr>
+            <tr><td><strong>Use retrieval instead of stuffing</strong></td><td style="color: #f87171;">Architecture change</td><td>50–90%</td><td>Instead of pasting entire databases or document sets into the prompt, use a retrieval system (RAG) to find only the relevant paragraphs. Sending 3 relevant paragraphs instead of 200 pages reduces input costs by 99%.</td></tr>
+          </tbody>
+        </table>
+
+        <p style="margin-top: 14px; margin-bottom: 8px;"><strong>Where the money actually goes:</strong></p>
+        <p>Output tokens are the hidden cost driver. Across all providers in our catalog, output tokens cost <strong>3× to 10× more than input tokens</strong>. A model that generates a 2,000-word essay when a 200-word summary would suffice costs 10× more in output alone. This is why <code>max_tokens</code> and structured outputs have such outsized impact — they directly reduce the most expensive part of every API call.</p>
+
+        <table style="margin-top: 12px;">
+          <thead><tr><th>Provider</th><th>Input $/MTok</th><th>Output $/MTok</th><th>Output Multiplier</th></tr></thead>
+          <tbody>
+            <tr><td>Mistral Small 4</td><td>$0.10</td><td>$0.30</td><td>3×</td></tr>
+            <tr><td>GPT-5.4 mini</td><td>$0.75</td><td>$4.50</td><td>6×</td></tr>
+            <tr><td>Claude Sonnet 4.6</td><td>$3.00</td><td>$15.00</td><td>5×</td></tr>
+            <tr><td>GPT-5.5</td><td>$5.00</td><td>$30.00</td><td>6×</td></tr>
+          </tbody>
+        </table>
+
+        <p style="margin-top: 12px;"><strong>The bottom line:</strong> token optimization is the least glamorous lever, but it compounds with everything else. A team that caches prompts, uses batch, sets a medium reasoning effort, <em>and</em> trims 30% of wasted tokens can reduce their total inference bill by <strong>80–95%</strong> compared to a naive implementation using the same model.</p>
+      </div>
     </div>
 
     <div class="content-section">
