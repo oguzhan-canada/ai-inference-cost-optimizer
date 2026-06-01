@@ -1205,13 +1205,40 @@
 
       <h4>1. Model Right-Sizing (50–95% savings)</h4>
       <p>Start with the <strong>smallest model that meets quality requirements</strong>. Most production workloads do not need frontier-tier models. A practical rule: begin with the cheapest model and only move up if evals or user feedback show a quality gap.</p>
+
+      <div class="provider-block" style="margin-top: 16px; margin-bottom: 20px;">
+        <h4 style="color: var(--accent); margin-bottom: 12px;">📌 The Single Biggest Cost Decision You Will Make</h4>
+        <p>Model choice is the <strong>most impactful cost lever</strong> — it determines your base rate before any other optimization applies. The difference between the cheapest and most expensive model in our catalog is <strong>300×</strong> ($0.10/MTok for Ministral 3B vs $30/MTok for GPT-5.5 output). No amount of caching, batching, or token trimming can overcome choosing a model that is 300× more expensive than what you need.</p>
+        <p style="margin-top: 10px;"><strong>Think of it like this:</strong> you need to get across town. You could hire a private helicopter, a luxury sedan, a standard taxi, or take the bus. They all get you there. If you just need to get across town reliably, the taxi works fine — the helicopter is not 100× better for this trip. AI models work the same way: a $30/MTok frontier model answering "Is this email spam?" produces the same yes/no answer as a $0.10/MTok model, but costs 300× more.</p>
+
+        <p style="margin-top: 14px; margin-bottom: 8px;"><strong>Why most teams overspend:</strong></p>
+        <ul>
+          <li><strong>Starting at the top</strong> — teams prototype with the most powerful model (GPT-5.5, Claude Opus) and never test whether a cheaper model works just as well</li>
+          <li><strong>Assuming bigger is always better</strong> — for structured tasks like classification, extraction, and formatting, smaller models often perform identically to flagship models</li>
+          <li><strong>Fear of quality loss</strong> — in practice, most teams that test cheaper models find the quality difference is undetectable for 70–80% of their workloads</li>
+          <li><strong>No evaluation process</strong> — without measuring quality (even informally), there is no evidence that the expensive model is actually better for your specific use case</li>
+        </ul>
+
+        <p style="margin-top: 14px; margin-bottom: 8px;"><strong>The right-sizing process:</strong></p>
+        <table>
+          <thead><tr><th>Step</th><th>Action</th><th>What You Learn</th></tr></thead>
+          <tbody>
+            <tr><td><strong>1</strong></td><td>Run your workload on the cheapest eligible model</td><td>Baseline cost and quality floor</td></tr>
+            <tr><td><strong>2</strong></td><td>Spot-check 20–50 outputs for quality</td><td>Whether the cheap model is "good enough"</td></tr>
+            <tr><td><strong>3</strong></td><td>If quality is acceptable — stop here, you are done</td><td>Most teams stop at this step</td></tr>
+            <tr><td><strong>4</strong></td><td>If quality falls short, move up one tier and repeat</td><td>The minimum model tier that meets your bar</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="margin-bottom: 8px;"><strong>Model tiers and when to use them:</strong></p>
       <table>
-        <thead><tr><th>Task Complexity</th><th>Recommended Tier</th><th>Example Models</th></tr></thead>
+        <thead><tr><th>Task Complexity</th><th>Recommended Tier</th><th>Example Models</th><th>Monthly Cost at 100M in / 20M out</th></tr></thead>
         <tbody>
-          <tr><td>Simple (classification, extraction)</td><td>Nano / Mini</td><td>Ministral 3B, Phi-4 mini, GPT-5.4 nano, Flash-Lite</td></tr>
-          <tr><td>Standard (chat, summarization)</td><td>Mid-tier</td><td>Mistral Small 4, Phi-4, GPT-5.4 mini</td></tr>
-          <tr><td>Complex (reasoning, coding)</td><td>Standard</td><td>GPT-5.4, Claude Sonnet 4.6, Mistral Large 3</td></tr>
-          <tr><td>Frontier (research, deep analysis)</td><td>Flagship</td><td>GPT-5.5, Claude Opus 4.8</td></tr>
+          <tr><td>Simple (classification, extraction)</td><td>Nano / Mini</td><td>Ministral 3B, Phi-4 mini, GPT-5.4 nano, Flash-Lite</td><td>$12 – $35</td></tr>
+          <tr><td>Standard (chat, summarization)</td><td>Mid-tier</td><td>Mistral Small 4, Phi-4, GPT-5.4 mini</td><td>$16 – $165</td></tr>
+          <tr><td>Complex (reasoning, coding)</td><td>Standard</td><td>GPT-5.4, Claude Sonnet 4.6, Mistral Large 3</td><td>$80 – $550</td></tr>
+          <tr><td>Frontier (research, deep analysis)</td><td>Flagship</td><td>GPT-5.5, Claude Opus 4.8</td><td>$1,000 – $1,100</td></tr>
         </tbody>
       </table>
 
