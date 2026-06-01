@@ -2,6 +2,8 @@
 
 A rule-based cost advisor that recommends the cheapest viable AI inference path for a given workload — and explains why it's cheaper. Not a calculator. A FinOps decision assistant.
 
+🔗 **Live demo:** [oguzhan-canada.github.io/ai-inference-cost-optimizer](https://oguzhan-canada.github.io/ai-inference-cost-optimizer/)
+
 **Status:** v0.1 prototype · self-contained single-page web app · GitHub-Pages-ready.
 **Pricing snapshot:** 2026-05-31 (verified against six provider documentation sets).
 **Positioning:** *Optimize cost without sacrificing enough quality to matter.*
