@@ -1252,6 +1252,36 @@
       <h4>4. Reasoning Effort Control (30–70% savings)</h4>
       <p>Use the lowest reasoning effort that still solves the task. Models with effort parameters (OpenAI, Anthropic) can dramatically reduce hidden thinking tokens. <strong>Medium is often the best default</strong> — reserve high for genuinely hard cases.</p>
 
+      <div class="provider-block" style="margin-top: 16px; margin-bottom: 20px;">
+        <h4 style="color: var(--accent); margin-bottom: 12px;">📌 Understanding Reasoning Effort</h4>
+        <p>Some AI models do not just produce an answer — they <strong>"think" before responding</strong>. This thinking uses tokens you pay for, even though you never see them in the output. A model set to "high" effort might spend 5,000 hidden tokens reasoning through a problem that "medium" effort solves in 500 tokens — with the same final answer. That is a 10× cost difference for identical results.</p>
+        <p style="margin-top: 10px;"><strong>Think of it like this:</strong> asking a consultant to write a one-page summary. You can ask them to spend 30 minutes or 3 hours on it. For a routine summary, both versions look the same — but one costs 6× more. Reasoning effort control lets you tell the AI how hard to think before answering.</p>
+
+        <p style="margin-top: 14px; margin-bottom: 8px;"><strong>How easy is it to set up?</strong></p>
+        <table>
+          <thead><tr><th>Provider</th><th>Setup Difficulty</th><th>How It Works</th><th>Savings</th></tr></thead>
+          <tbody>
+            <tr><td>OpenAI</td><td style="color: #4ade80;">One parameter</td><td>Add <code>reasoning_effort: "medium"</code> or <code>"low"</code> to your API call. Works on reasoning-capable models (o-series, GPT-5.5). One line of code.</td><td>30–70% on reasoning tokens</td></tr>
+            <tr><td>Anthropic (Claude)</td><td style="color: #4ade80;">One parameter</td><td>Set <code>budget_tokens</code> to cap thinking, or use the <code>effort</code> parameter (low/medium/high). Affects all extended thinking models. One line of code.</td><td>30–70% on thinking tokens</td></tr>
+            <tr><td>Google Gemini</td><td style="color: #facc15;">Model-dependent</td><td>Gemini 2.5 Flash/Pro support a <code>thinking_budget</code> parameter to cap reasoning tokens. Not available on all models.</td><td>Varies by budget cap</td></tr>
+            <tr><td>Mistral</td><td style="color: #f87171;">Not available</td><td>Mistral models do not expose a reasoning effort parameter. Cost is determined by model choice alone.</td><td>—</td></tr>
+            <tr><td>Microsoft Foundry</td><td style="color: #4ade80;">One parameter (GPT models)</td><td>Same <code>reasoning_effort</code> parameter as OpenAI for Foundry-hosted GPT models.</td><td>30–70% on reasoning tokens</td></tr>
+            <tr><td>Microsoft Phi-4</td><td style="color: #f87171;">Not available</td><td>Phi-4 models do not support reasoning effort control. They are small language models designed for efficiency by default.</td><td>—</td></tr>
+          </tbody>
+        </table>
+
+        <p style="margin-top: 14px; margin-bottom: 8px;"><strong>When to use each level:</strong></p>
+        <table>
+          <thead><tr><th>Effort Level</th><th>Best For</th><th>Examples</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Low</strong></td><td>Simple, well-defined tasks where the answer is straightforward</td><td>Classification, extraction, formatting, simple Q&A</td></tr>
+            <tr><td><strong>Medium</strong> ⭐</td><td>Most production workloads — good balance of quality and cost</td><td>Summarization, chat, content generation, standard coding</td></tr>
+            <tr><td><strong>High</strong></td><td>Genuinely complex problems requiring deep analysis</td><td>Multi-step math, legal reasoning, novel algorithm design, research</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top: 10px;"><strong>The key insight:</strong> most teams default to "high" because they assume more thinking equals better answers. In practice, <strong>80% of production workloads perform identically at "medium"</strong>. The recommendation is simple — start at medium, only move to high if you measure a quality drop on your specific task. This is a one-line code change with no architectural refactoring needed.</p>
+      </div>
+
       <h4>5. Token Optimization (10–30% savings)</h4>
       <p>Set <code>max_tokens</code>, remove unnecessary boilerplate, prefer structured outputs for machine-consumed responses. Summarize long documents before sending to expensive models.</p>
     </div>
