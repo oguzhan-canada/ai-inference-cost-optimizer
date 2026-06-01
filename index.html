@@ -1381,71 +1381,57 @@
     </div>
 
     <div class="content-section">
-      <h3>Provider-Specific Recommendations</h3>
+      <h3>Provider Quick Reference</h3>
+      <p>Key differentiators not covered in the universal strategies above.</p>
 
       <div class="provider-block">
         <h4>Mistral</h4>
-        <p><strong>Pricing:</strong> Ministral 3B ($0.10/$0.10), Small 4 ($0.10/$0.30), Large 3 ($0.50/$1.50), Codestral ($0.30/$0.90)</p>
         <ul>
           <li>Lowest per-token rates in the catalog — dominant cost leader at tiers 1–3</li>
-          <li>No prompt caching support, but base rates are so low caching wouldn't help competitors catch up on output cost</li>
-          <li>Small 4 is open-weight (Apache 2.0) — self-hostable for fixed-cost deployment</li>
-          <li>Codestral is purpose-built for code generation at 3× cheaper output than GPT-5.4 mini</li>
-          <li>Batch API: 50% off, 24h turnaround</li>
+          <li>Small 4 is open-weight (Apache 2.0) — self-hostable for fixed-cost deployment at scale</li>
+          <li>Codestral: purpose-built for code generation at 3× cheaper output than GPT-5.4 mini</li>
         </ul>
       </div>
 
       <div class="provider-block">
         <h4>OpenAI</h4>
-        <p><strong>Pricing:</strong> GPT-5.4 nano ($0.20/$1.25), mini ($0.75/$4.50), GPT-5.4 ($2.50/$15), GPT-5.5 ($5/$30)</p>
         <ul>
-          <li>Automatic prompt caching on GPT-4o+ — no manual setup required</li>
-          <li>Cached input at 10% of base rate (e.g., $0.075/MTok for GPT-5.4 mini)</li>
-          <li>Batch API: 50% off, separate enqueued-token quota</li>
-          <li><code>reasoning_effort</code> parameter on reasoning-capable models (low/medium/high)</li>
+          <li>Widest model range (nano → flagship) — easiest provider to right-size within one ecosystem</li>
           <li>Regional residency adds ~10% premium for models released March 2026+</li>
+          <li>Strongest structured output support — best for machine-consumed JSON responses</li>
         </ul>
       </div>
 
       <div class="provider-block">
         <h4>Anthropic (Claude)</h4>
-        <p><strong>Pricing:</strong> Haiku 4.5 ($1/$5), Sonnet 4.6 ($3/$15), Opus 4.5–4.8 ($5/$25)</p>
         <ul>
-          <li>Explicit prompt caching with two TTLs: 5-min (write 1.25×, read 0.1×) and 1-hour (write 2×, read 0.1×)</li>
-          <li>Best effort control: low/medium/high/xhigh/max — affects all tokens including tool calls and thinking</li>
-          <li>Opus 4.7+ uses a new tokenizer: up to 35% more tokens for equivalent text — factor into migration cost estimates</li>
-          <li>Especially attractive for agentic workflows with heavy prompt reuse</li>
-          <li>Batch API: 50% off, usually &lt;1 hour turnaround</li>
+          <li>Best effort control granularity (low → max) — affects tool calls and thinking, not just output</li>
+          <li>Especially attractive for agentic workflows with heavy prompt reuse (caching + effort compound well)</li>
+          <li>Opus 4.7+ uses a new tokenizer: up to 35% more tokens for equivalent text — factor into migration estimates</li>
         </ul>
       </div>
 
       <div class="provider-block">
         <h4>Google Gemini</h4>
-        <p><strong>Pricing:</strong> Flash-Lite 3.5 ($0.25/$1.50) — only model with verified pricing in v0.1</p>
         <ul>
-          <li>Flash-Lite is a strong low-cost option for high-volume simple tasks</li>
-          <li>Context caching: both implicit (auto on 2.5+) and explicit (manual TTL)</li>
-          <li>Four pricing tiers: Standard, Batch (~50% off), Flex (~50% off), Priority (1.8× premium)</li>
+          <li>Flash-Lite 3.5 is a strong low-cost option for high-volume simple tasks</li>
+          <li>Four pricing tiers (Standard, Batch, Flex, Priority) — most flexible billing model</li>
           <li>Flash and Pro models omitted from v0.1 pending verified pricing</li>
         </ul>
       </div>
 
       <div class="provider-block">
         <h4>Microsoft Foundry</h4>
-        <p><strong>Pricing:</strong> Foundry GPT-5.4 mini ($0.75/$4.50), GPT-5.4 ($2.50/$15), Phi-4 mini ($0.075/$0.30), Phi-4 ($0.125/$0.50)</p>
         <ul>
-          <li>OpenAI models available with EU residency (not available on direct OpenAI)</li>
-          <li>Provisioned Throughput (PTU): fixed hourly capacity, cheaper than pay-per-token above ~60–70% utilization. Cached tokens are FREE on PTU.</li>
-          <li>Phi-4 models are Microsoft-native SLMs, open-weight (MIT), and self-hostable</li>
-          <li>Phi-4 mini at $0.075 input — cheapest input rate in the entire catalog</li>
-          <li>Phi-4 at $0.125/$0.50 competes with Mistral Small 4 at $0.10/$0.30 with Azure ecosystem support</li>
-          <li>Model Router: auto-route to optimal model per request for multi-model architectures</li>
+          <li>OpenAI models with EU residency — not available on direct OpenAI</li>
+          <li>Provisioned Throughput (PTU): fixed hourly capacity, cheaper above ~60–70% utilization; cached tokens are FREE on PTU</li>
+          <li>Phi-4 models: Microsoft-native SLMs, open-weight (MIT), self-hostable — Phi-4 mini has the cheapest input rate in the catalog ($0.075/MTok)</li>
         </ul>
       </div>
 
       <div class="provider-block">
         <h4>Cohere (Excluded from v0.1)</h4>
-        <p>Cohere is positioned as a retrieval and enterprise workflow provider. Its cost play is architectural — use Embed + Rerank to reduce candidates before sending to expensive generation models. Documented as yielding 90%+ reduction in tokens sent to generation. Pending verified 2026 pricing for inclusion.</p>
+        <p>Cohere's cost play is architectural — use Embed + Rerank to reduce candidates before sending to expensive generation models (90%+ token reduction). Pending verified 2026 pricing for inclusion.</p>
       </div>
     </div>
 
