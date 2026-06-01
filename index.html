@@ -1221,6 +1221,33 @@
       <h4>3. Prompt Caching (75–90% input savings)</h4>
       <p>Cache repeated prefixes — system prompts, policy documents, few-shot examples. Cached tokens are served at ~10% of base rate. Place static content at the beginning of prompts and keep prefixes identical to maximize hit rates.</p>
 
+      <div class="provider-block" style="margin-top: 16px; margin-bottom: 20px;">
+        <h4 style="color: var(--accent); margin-bottom: 12px;">📌 Why Prompt Caching Matters Most</h4>
+        <p>Of all the cost levers, prompt caching often delivers the <strong>largest and most immediate savings</strong> — because most AI applications send the same instructions, policies, or reference documents with every request. You are paying full price for the same text over and over again. Caching eliminates that waste.</p>
+        <p style="margin-top: 10px;"><strong>Think of it like this:</strong> every time your app calls the AI, it sends a message. The first part of that message — the rules, context, and background information — is usually identical across hundreds or thousands of requests. Without caching, the provider charges you full price to "read" that same text every single time. With caching, the provider remembers it and charges you a fraction of the cost.</p>
+
+        <p style="margin-top: 14px; margin-bottom: 8px;"><strong>How easy is it to set up?</strong></p>
+        <table>
+          <thead><tr><th>Provider</th><th>Setup Difficulty</th><th>How It Works</th><th>Discount</th></tr></thead>
+          <tbody>
+            <tr><td>OpenAI</td><td style="color: #4ade80;">Automatic — zero effort</td><td>Any repeated prompt prefix over 1,024 tokens is cached automatically. No code changes needed.</td><td>50% off cached input</td></tr>
+            <tr><td>Google Gemini</td><td style="color: #4ade80;">Automatic + optional manual</td><td>Implicit caching works automatically. Explicit caching (for precise control) takes ~5 lines of code.</td><td>75% off cached input</td></tr>
+            <tr><td>Anthropic (Claude)</td><td style="color: #facc15;">Small code change</td><td>Add a <code>cache_control</code> marker to tell the API what to remember. Takes 2–3 extra lines per request. Automatic caching also available on newer models.</td><td>90% off cached reads (25% write premium on first call)</td></tr>
+            <tr><td>Mistral</td><td style="color: #f87171;">Not available</td><td>No caching API. However, base rates are already so low that this gap rarely changes the cost winner.</td><td>—</td></tr>
+            <tr><td>Microsoft Foundry</td><td style="color: #4ade80;">Automatic (OpenAI models)</td><td>Same automatic caching as OpenAI for Foundry-hosted GPT models. Cached tokens are FREE on reserved capacity (PTU).</td><td>50% off (pay-per-token) / free (PTU)</td></tr>
+          </tbody>
+        </table>
+
+        <p style="margin-top: 14px; margin-bottom: 8px;"><strong>The real work is not in the code — it is in prompt design:</strong></p>
+        <ul>
+          <li><strong>Put static content first</strong> — system instructions, policies, reference documents, and few-shot examples should always appear at the beginning of the prompt</li>
+          <li><strong>Put dynamic content last</strong> — the user's specific question or input should come at the end</li>
+          <li><strong>Keep prefixes identical</strong> — even small differences (extra spaces, reworded instructions) break the cache and you pay full price again</li>
+          <li><strong>Reuse large documents</strong> — if you send the same 50-page policy document with every question, caching turns a $500/month cost into $50/month</li>
+        </ul>
+        <p style="margin-top: 10px;">For teams with well-structured prompts (separate system prompt + user message), enabling caching is a <strong>one-hour change</strong>. For applications where instructions and data are mixed together in every message, it requires a prompt restructuring effort — but the savings typically pay for that effort within the first week.</p>
+      </div>
+
       <h4>4. Reasoning Effort Control (30–70% savings)</h4>
       <p>Use the lowest reasoning effort that still solves the task. Models with effort parameters (OpenAI, Anthropic) can dramatically reduce hidden thinking tokens. <strong>Medium is often the best default</strong> — reserve high for genuinely hard cases.</p>
 
