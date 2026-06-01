@@ -1200,6 +1200,26 @@
 
   <div class="tab-panel" id="tab-cost-opt">
     <div class="content-section">
+      <h3>Quick-Start Action List</h3>
+      <p>Prioritized by impact and ease of implementation. Start at the top and work down — the first five actions are detailed in the strategy deep-dives below.</p>
+      <table>
+        <thead><tr><th>#</th><th>Action</th><th>Savings</th><th>Effort</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Switch to batch API for non-real-time</td><td>50%</td><td>Low</td></tr>
+          <tr><td>2</td><td>Enable prompt caching (structure prompts correctly)</td><td>75–90% input</td><td>Low</td></tr>
+          <tr><td>3</td><td>Downsize model (test quality with cheaper)</td><td>50–95%</td><td>Medium</td></tr>
+          <tr><td>4</td><td>Use effort=medium instead of high</td><td>30–70%</td><td>Low</td></tr>
+          <tr><td>5</td><td>Set max_tokens appropriately</td><td>10–30%</td><td>Low</td></tr>
+          <tr><td>6</td><td>Use Mistral/Gemini/Phi-4 for simple tasks</td><td>80–95% vs frontier</td><td>Low</td></tr>
+          <tr><td>7</td><td>Implement model cascade (cheap → expensive)</td><td>60–80%</td><td>High</td></tr>
+          <tr><td>8</td><td>PTU/Reserved for steady-state (Microsoft)</td><td>20–40% vs on-demand</td><td>Medium</td></tr>
+          <tr><td>9</td><td>Compaction for long conversations (Claude)</td><td>40–60%</td><td>Low</td></tr>
+          <tr><td>10</td><td>Self-host open-weight models (Mistral, Phi-4)</td><td>50–90% at scale</td><td>High</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="content-section">
       <h3>Cost Optimization Strategies</h3>
       <p>These techniques apply across all AI providers. Applying them in combination produces compound savings.</p>
 
@@ -1433,25 +1453,6 @@
         <h4>Cohere (Excluded from v0.1)</h4>
         <p>Cohere's cost play is architectural — use Embed + Rerank to reduce candidates before sending to expensive generation models (90%+ token reduction). Pending verified 2026 pricing for inclusion.</p>
       </div>
-    </div>
-
-    <div class="content-section">
-      <h3>Top 10 Cost Optimization Actions</h3>
-      <table>
-        <thead><tr><th>#</th><th>Action</th><th>Savings</th><th>Effort</th></tr></thead>
-        <tbody>
-          <tr><td>1</td><td>Switch to batch API for non-real-time</td><td>50%</td><td>Low</td></tr>
-          <tr><td>2</td><td>Enable prompt caching (structure prompts correctly)</td><td>75–90% input</td><td>Low</td></tr>
-          <tr><td>3</td><td>Downsize model (test quality with cheaper)</td><td>50–95%</td><td>Medium</td></tr>
-          <tr><td>4</td><td>Use effort=medium instead of high</td><td>30–70%</td><td>Low</td></tr>
-          <tr><td>5</td><td>Set max_tokens appropriately</td><td>10–30%</td><td>Low</td></tr>
-          <tr><td>6</td><td>Use Mistral/Gemini/Phi-4 for simple tasks</td><td>80–95% vs frontier</td><td>Low</td></tr>
-          <tr><td>7</td><td>Implement model cascade (cheap → expensive)</td><td>60–80%</td><td>High</td></tr>
-          <tr><td>8</td><td>PTU/Reserved for steady-state (Microsoft)</td><td>20–40% vs on-demand</td><td>Medium</td></tr>
-          <tr><td>9</td><td>Compaction for long conversations (Claude)</td><td>40–60%</td><td>Low</td></tr>
-          <tr><td>10</td><td>Self-host open-weight models (Mistral, Phi-4)</td><td>50–90% at scale</td><td>High</td></tr>
-        </tbody>
-      </table>
     </div>
   </div>
 
