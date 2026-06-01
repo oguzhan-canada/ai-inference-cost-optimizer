@@ -1,0 +1,1941 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Inference Cost Optimizer — FinOps Decision Assistant</title>
+<meta name="description" content="A rule-based cost advisor that recommends the cheapest viable AI inference path for a workload. Not a calculator — a FinOps decision assistant." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0c0a;
+    --surface-1: #15140f;
+    --surface-2: #1c1a14;
+    --surface-3: #24211a;
+    --border: #2c2922;
+    --border-strong: #3a3629;
+    --text: #ebe7df;
+    --text-muted: #8a857a;
+    --text-dim: #5a5651;
+    --accent: #d4a259;        /* gold — recommendation, savings */
+    --accent-soft: #b58944;
+    --warn: #c66b3d;          /* burnt sienna — expensive baseline */
+    --ok: #7fa37a;            /* muted sage — passed checks */
+    --serif: 'Instrument Serif', 'Times New Roman', serif;
+    --sans: 'Geist', -apple-system, system-ui, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--text); font-family: var(--sans); font-weight: 400; font-size: 15px; line-height: 1.55; }
+  body {
+    background-image:
+      radial-gradient(circle at 8% 5%, rgba(212, 162, 89, 0.04) 0%, transparent 35%),
+      radial-gradient(circle at 92% 95%, rgba(198, 107, 61, 0.03) 0%, transparent 40%);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── Layout ──────────────────────────────────────── */
+  .frame {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 32px 40px 80px;
+  }
+
+  header.top {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 24px;
+    padding-bottom: 28px;
+    margin-bottom: 36px;
+    border-bottom: 1px solid var(--border);
+  }
+  .brand-row { display: flex; align-items: baseline; gap: 14px; }
+  .brand-mark {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border: 1px solid var(--accent-soft);
+    border-radius: 2px;
+  }
+  .brand-name {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+  }
+  h1.title {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(36px, 5.5vw, 64px);
+    line-height: 1.0;
+    letter-spacing: -0.015em;
+    margin-top: 18px;
+    color: var(--text);
+  }
+  h1.title em {
+    font-style: italic;
+    color: var(--accent);
+  }
+  .tagline {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 20px;
+    color: var(--text-muted);
+    margin-top: 10px;
+    max-width: 540px;
+    line-height: 1.4;
+  }
+  .meta-stack {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    text-align: right;
+    line-height: 1.7;
+  }
+  .meta-stack span { color: var(--text-muted); }
+  .meta-stack .dot { color: var(--ok); }
+
+  /* ─── Main grid ──────────────────────────────────── */
+  main {
+    display: grid;
+    grid-template-columns: minmax(320px, 380px) 1fr;
+    gap: 36px;
+    align-items: start;
+  }
+  @media (max-width: 920px) {
+    main { grid-template-columns: 1fr; gap: 28px; }
+    .frame { padding: 24px 20px 64px; }
+  }
+
+  /* ─── Form panel ─────────────────────────────────── */
+  .form-panel {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 24px 22px;
+    position: sticky;
+    top: 24px;
+  }
+  @media (max-width: 920px) { .form-panel { position: static; } }
+
+  .form-panel h2,
+  .result-panel h2,
+  section.alts h2 {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .form-panel h2::before,
+  .result-panel h2::before,
+  section.alts h2::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+
+  .field { margin-bottom: 16px; }
+  .field label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .field label .num {
+    color: var(--accent);
+    margin-right: 6px;
+    font-weight: 500;
+  }
+  .field select,
+  .field input[type=number] {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 9px 11px;
+    font-family: var(--sans);
+    font-size: 14px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .field input[type=number] { cursor: text; font-family: var(--mono); }
+  .field select:focus,
+  .field input[type=number]:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .field select:hover { border-color: var(--border-strong); }
+
+  .vol-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .hint {
+    font-size: 14px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    font-style: italic;
+    font-family: var(--serif);
+  }
+
+  /* ─── Result panel ───────────────────────────────── */
+  .result-panel {
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  /* Verdict block */
+  .verdict {
+    background: var(--surface-1);
+    border: 1px solid var(--border-strong);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    padding: 28px 30px;
+    position: relative;
+    overflow: hidden;
+  }
+  .verdict::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 240px; height: 240px;
+    background: radial-gradient(circle at top right, rgba(212, 162, 89, 0.08), transparent 70%);
+    pointer-events: none;
+  }
+  .verdict-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .verdict-model {
+    font-family: var(--serif);
+    font-size: clamp(28px, 4vw, 42px);
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+  }
+  .verdict-model .provider {
+    color: var(--text-muted);
+    font-style: italic;
+  }
+  .verdict-model .slash {
+    color: var(--text-dim);
+    margin: 0 12px;
+    font-weight: 300;
+  }
+  .verdict-model .model-name {
+    color: var(--accent);
+  }
+  .verdict-because {
+    font-family: var(--serif);
+    font-style: normal;
+    font-size: 17px;
+    color: var(--text-muted);
+    margin-top: 14px;
+    max-width: 560px;
+    line-height: 1.45;
+  }
+
+  /* Cost comparison */
+  .cost-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+    margin-top: 26px;
+    border-top: 1px solid var(--border);
+    padding-top: 22px;
+  }
+  @media (max-width: 640px) { .cost-grid { grid-template-columns: 1fr; gap: 18px; padding-top: 18px; } }
+  .cost-cell {
+    padding: 0 18px;
+    border-right: 1px solid var(--border);
+  }
+  .cost-cell:first-child { padding-left: 0; }
+  .cost-cell:last-child { border-right: none; padding-right: 0; }
+  @media (max-width: 640px) { .cost-cell { border-right: none; padding-left: 0; padding-right: 0; } }
+  .cost-cell .lbl {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.18em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .cost-cell .val {
+    font-family: var(--mono);
+    font-size: 26px;
+    font-weight: 500;
+    line-height: 1.0;
+    letter-spacing: -0.01em;
+  }
+  .cost-cell .sub {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text);
+    margin-top: 6px;
+  }
+  .cost-cell .lbl {
+    position: relative;
+    cursor: help;
+  }
+  .cost-cell .lbl .tip {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e1e1e;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 12px;
+    font-style: normal;
+    text-transform: none;
+    letter-spacing: normal;
+    line-height: 1.45;
+    padding: 10px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border-strong);
+    white-space: normal;
+    width: 240px;
+    z-index: 50;
+    transition: opacity 0.15s;
+    pointer-events: none;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  }
+  .cost-cell .lbl:hover .tip {
+    visibility: visible;
+    opacity: 1;
+  }
+  .cost-cell.savings .val { color: var(--accent); }
+  .cost-cell.baseline .val { color: var(--warn); text-decoration: line-through; text-decoration-thickness: 1px; text-decoration-color: rgba(198, 107, 61, 0.4); }
+  .cost-cell.recommended .val { color: var(--text); }
+
+  /* Cost bar */
+  .cost-bar-wrap {
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+  }
+  .cost-bar {
+    height: 8px;
+    background: rgba(198, 107, 61, 0.18);
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cost-bar .fill {
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    background: linear-gradient(90deg, var(--accent-soft), var(--accent));
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+  .cost-bar-legend {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text);
+    margin-top: 8px;
+    letter-spacing: 0.08em;
+  }
+  /* Levers list */
+  .levers {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 24px 28px;
+  }
+  .lever {
+    display: grid;
+    grid-template-columns: 28px 1fr auto;
+    align-items: baseline;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px dashed var(--border);
+  }
+  .lever:last-child { border-bottom: none; padding-bottom: 0; }
+  .lever:first-child { padding-top: 6px; }
+  .lever .num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+  }
+  .lever .body { display: flex; flex-direction: column; gap: 4px; }
+  .lever .name {
+    font-family: var(--sans);
+    font-size: 15px;
+    color: var(--text);
+    font-weight: 500;
+  }
+  .lever .desc {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+  .lever .impact {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ok);
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+  .lever.note .impact { color: var(--text-dim); }
+
+  /* Decision trace */
+  .trace {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 20px 24px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.8;
+  }
+  .trace h2 { margin-bottom: 14px; }
+  .trace-line { color: var(--text-muted); }
+  .trace-line .step { color: var(--text-dim); margin-right: 10px; }
+  .trace-line .arrow { color: var(--accent); margin: 0 8px; }
+  .trace-line .val { color: var(--text); }
+  .trace-line.kill { color: var(--warn); }
+  .trace-line.ok .arrow { color: var(--ok); }
+
+  /* Alternatives */
+  section.alts {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 22px 26px;
+  }
+  table.alts-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+  .alts-table th {
+    text-align: left;
+    font-weight: 500;
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 8px 10px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .alts-table th:last-child, .alts-table td:last-child { text-align: right; }
+  .alts-table td {
+    padding: 11px 10px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+  .alts-table tr:last-child td { border-bottom: none; }
+  .alts-table tr.winner td { color: var(--accent); }
+  .alts-table .tier-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border: 1px solid var(--border-strong);
+    border-radius: 2px;
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+  }
+  .alts-table tr.winner .tier-badge { border-color: var(--accent-soft); color: var(--accent); }
+
+  /* Actions */
+  .actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  button.btn {
+    background: var(--surface-2);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 11px 18px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  button.btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  button.btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--bg);
+    font-weight: 500;
+  }
+  button.btn.primary:hover {
+    background: var(--accent-soft);
+    border-color: var(--accent-soft);
+    color: var(--bg);
+  }
+
+  /* JSON modal */
+  .json-modal {
+    position: fixed; inset: 0;
+    background: rgba(13, 12, 10, 0.85);
+    backdrop-filter: blur(6px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 24px;
+  }
+  .json-modal.open { display: flex; }
+  .json-modal-inner {
+    background: var(--surface-1);
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    max-width: 720px;
+    width: 100%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .json-modal-head {
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .json-modal-head h3 {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .json-modal-body {
+    padding: 22px;
+    overflow: auto;
+    flex: 1;
+  }
+  .json-modal-body pre {
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .json-modal-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-family: var(--mono);
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .json-modal-close:hover { color: var(--text); }
+
+  /* Footer */
+  footer {
+    margin-top: 56px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 18px;
+    align-items: baseline;
+  }
+  footer p {
+    font-family: var(--serif);
+    font-style: normal;
+    font-size: 15px;
+    color: var(--text);
+    max-width: 680px;
+    line-height: 1.5;
+  }
+  footer .links {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+  }
+  footer .links a {
+    color: var(--text-muted);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--border-strong);
+    padding-bottom: 1px;
+    margin-left: 16px;
+  }
+  footer .links a:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* Decorative numerals */
+  .numeral {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--text-dim);
+  }
+
+  /* ─── About / disclaimer section ───────────────── */
+  .about-section {
+    margin-bottom: 36px;
+    padding: 28px 30px;
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+  }
+  .about-section::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle at top left, rgba(212, 162, 89, 0.05), transparent 70%);
+    pointer-events: none;
+  }
+  .about-section h2 {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .about-section h2::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+  .triad {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto 1fr;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 22px;
+    padding: 20px 0;
+  }
+  .triad-item {
+    text-align: center;
+    padding: 14px 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--surface-2);
+  }
+  .triad-item .triad-icon {
+    font-size: 20px;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .triad-item .triad-label {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .triad-item .triad-desc {
+    font-family: var(--serif);
+    font-style: normal;
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    line-height: 1.35;
+  }
+  .triad-sep {
+    font-family: var(--serif);
+    font-size: 20px;
+    color: var(--text-dim);
+    text-align: center;
+    padding: 0 6px;
+  }
+  @media (max-width: 640px) {
+    .triad { grid-template-columns: 1fr; gap: 8px; }
+    .triad-sep { display: none; }
+  }
+  .about-text {
+    font-family: var(--serif);
+    font-style: normal;
+    font-size: 16px;
+    color: var(--text-muted);
+    line-height: 1.55;
+    margin-bottom: 12px;
+    max-width: 800px;
+  }
+  .about-text strong {
+    font-style: normal;
+    color: var(--text);
+    font-weight: 400;
+  }
+  .disclaimer-box {
+    margin-top: 16px;
+    padding: 14px 18px;
+    border: 1px dashed var(--border-strong);
+    border-radius: 3px;
+    background: rgba(198, 107, 61, 0.04);
+  }
+  .disclaimer-box p {
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.6;
+    margin: 0;
+  }
+  .disclaimer-box .disc-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--warn);
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  /* ─── Field hints ──────────────────────────────── */
+  .field-hint {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    line-height: 1.45;
+    font-family: var(--sans);
+    padding-left: 2px;
+  }
+
+  /* ─── Tabs ─────────────────────────────────────── */
+  .tab-nav {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+  }
+  .tab-btn {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 14px 24px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .tab-btn:hover {
+    color: var(--text);
+    background: var(--surface-1);
+  }
+  .tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .tab-panel {
+    display: none;
+  }
+  .tab-panel.active {
+    display: block;
+  }
+
+  /* ─── Methodology & Cost Opt content ────────────── */
+  .content-section {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 28px 30px;
+    margin-bottom: 24px;
+  }
+  .content-section h3 {
+    font-family: var(--mono);
+    font-size: 14px;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .content-section h4 {
+    font-family: var(--sans);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin-top: 20px;
+    margin-bottom: 8px;
+  }
+  .content-section p,
+  .content-section li {
+    font-family: var(--sans);
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.65;
+    margin-bottom: 10px;
+  }
+  .content-section ul, .content-section ol {
+    padding-left: 20px;
+    margin-bottom: 14px;
+  }
+  .content-section li {
+    margin-bottom: 6px;
+  }
+  .content-section strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+  .content-section table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--mono);
+    font-size: 12px;
+    margin: 14px 0;
+  }
+  .content-section th {
+    text-align: left;
+    font-weight: 500;
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+  .content-section td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+  .content-section tr:last-child td { border-bottom: none; }
+  .content-section code {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--surface-2);
+    padding: 2px 6px;
+    border-radius: 2px;
+    color: var(--accent);
+  }
+  .provider-block {
+    margin-top: 20px;
+    padding: 20px 24px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+  .provider-block h4 {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+    margin-top: 0;
+    margin-bottom: 10px;
+  }
+  .provider-block p, .provider-block li {
+    font-size: 13px;
+  }
+
+  /* Subtle entrance animation */
+  @keyframes lift {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .verdict, .levers, .trace, section.alts { animation: lift 0.45s ease both; }
+  .levers { animation-delay: 0.06s; }
+  .trace { animation-delay: 0.12s; }
+  section.alts { animation-delay: 0.18s; }
+</style>
+</head>
+<body>
+<div class="frame">
+
+  <header class="top">
+    <div>
+      <div class="brand-row">
+        <span class="brand-mark">FinOps · AI</span>
+        <span class="brand-name">v0.1 · prototype</span>
+      </div>
+      <h1 class="title">AI Inference <em>Cost Optimizer</em></h1>
+      <p class="tagline">Describe your workload. Get the cheapest viable model, the savings breakdown, and the logic behind it.</p>
+    </div>
+    <div class="meta-stack">
+      <div><span>pricing</span> · 2026-05-31</div>
+      <div><span>providers</span> · 5</div>
+      <div><span>models</span> · 16</div>
+      <div><span class="dot">●</span> rules engine ready</div>
+    </div>
+  </header>
+
+  <nav class="tab-nav">
+    <button class="tab-btn active" data-tab="tool">Cost Advisor</button>
+    <button class="tab-btn" data-tab="methodology">Methodology</button>
+    <button class="tab-btn" data-tab="cost-opt">Cost Optimization</button>
+    <button class="tab-btn" data-tab="about">About</button>
+  </nav>
+
+  <div class="tab-panel active" id="tab-tool">
+  <main>
+    <!-- ─── Input panel ─────────────────────────────── -->
+    <aside class="form-panel">
+      <h2>Workload</h2>
+
+      <div class="field">
+        <label for="task"><span class="num">01</span>Task type</label>
+        <select id="task">
+          <option value="classification">Classification / labeling</option>
+          <option value="extraction">Extraction / parsing</option>
+          <option value="chat" selected>Chat / Q&A</option>
+          <option value="summarization">Summarization</option>
+          <option value="reasoning">Multi-step reasoning</option>
+          <option value="coding">Code generation</option>
+          <option value="agent">Agentic / tool-using</option>
+        </select>
+        <div class="field-hint">What will the model do? Simple tasks (classification, extraction) can use small cheap models. Complex tasks (reasoning, coding, agents) need higher-tier models with better instruction-following.</div>
+      </div>
+
+      <div class="field">
+        <label for="latency"><span class="num">02</span>Latency requirement</label>
+        <select id="latency">
+          <option value="realtime" selected>Real-time (user-facing)</option>
+          <option value="near">Near real-time (sub-minute OK)</option>
+          <option value="async">Async (hours OK — batchable)</option>
+        </select>
+        <div class="field-hint">How fast does the user need a response? Async workloads unlock the Batch API — typically 50% cheaper. Real-time means the user is waiting.</div>
+      </div>
+
+      <div class="field">
+        <label for="reuse"><span class="num">03</span>Reuse pattern</label>
+        <select id="reuse">
+          <option value="oneoff">One-off — unique prompts</option>
+          <option value="repeated" selected>Repeated prefix (system prompt reused)</option>
+          <option value="heavy">Heavy document reuse (same doc, many questions)</option>
+        </select>
+        <div class="field-hint">Do your prompts share the same prefix or documents? Repeated content can be cached at ~90% off input cost. One-off prompts get no caching benefit.</div>
+      </div>
+
+      <div class="field">
+        <label for="context"><span class="num">04</span>Context size</label>
+        <select id="context">
+          <option value="small" selected>Small (&lt; 4K tokens)</option>
+          <option value="medium">Medium (4K – 32K)</option>
+          <option value="large">Large (32K – 200K)</option>
+        </select>
+        <div class="field-hint">How much text goes into each prompt? Large contexts (>32K tokens) make caching critical and may trigger long-context surcharges. Prefer chunking + RAG when possible.</div>
+      </div>
+
+      <div class="field">
+        <label for="quality"><span class="num">05</span>Quality bar</label>
+        <select id="quality">
+          <option value="good-enough">Good-enough — internal / experimental</option>
+          <option value="production" selected>Production — customer-facing</option>
+          <option value="high">High — accuracy-critical</option>
+          <option value="frontier">Frontier — research / deep analysis</option>
+        </select>
+        <div class="field-hint">How good must the output be? "Good-enough" uses the cheapest tier; "production" ensures customer-facing quality; "frontier" reserves the most capable (and expensive) models.</div>
+      </div>
+
+      <div class="field">
+        <label for="compliance"><span class="num">06</span>Compliance</label>
+        <select id="compliance">
+          <option value="none" selected>None — any provider</option>
+          <option value="us">US data residency</option>
+          <option value="eu">EU data residency</option>
+          <option value="selfhost">Self-host required (open weights only)</option>
+        </select>
+        <div class="field-hint">Data residency or deployment constraint? EU/US residency narrows eligible providers. Self-host limits to open-weight models you deploy on your own infrastructure.</div>
+      </div>
+
+      <div class="field">
+        <label for="throughput"><span class="num">07</span>Throughput pattern</label>
+        <select id="throughput">
+          <option value="low">Low / sporadic</option>
+          <option value="bursty" selected>Bursty (spiky)</option>
+          <option value="steady">Steady-state high (&gt;60% utilization)</option>
+        </select>
+        <div class="field-hint">How consistent is your usage? Steady high-volume workloads may benefit from reserved capacity (PTU). Bursty or low traffic is better served by pay-per-token pricing.</div>
+      </div>
+
+      <div class="field">
+        <label for="vol-in"><span class="num">08</span>Monthly volume (millions of tokens)</label>
+        <div class="vol-row">
+          <input type="number" id="vol-in" value="100" min="0.1" step="1" />
+          <input type="number" id="vol-out" value="20" min="0.1" step="1" />
+        </div>
+        <div class="hint">input · output — used to translate per-token rates into a real dollar figure.</div>
+      </div>
+    </aside>
+
+    <!-- ─── Result panel ─────────────────────────────── -->
+    <div class="result-panel">
+
+      <div class="verdict">
+        <div class="verdict-label">Recommended path</div>
+        <div class="verdict-model" id="verdict-model">—</div>
+        <p class="verdict-because" id="verdict-because">—</p>
+
+        <div class="cost-grid">
+          <div class="cost-cell baseline">
+            <div class="lbl">Frontier baseline<span class="tip">What it would cost using the most expensive frontier model (GPT-5.5) at list price, with no optimizations applied. This is your worst-case reference point.</span></div>
+            <div class="val" id="cost-baseline">—</div>
+            <div class="sub" id="cost-baseline-sub">GPT-5.5 real-time, no opt</div>
+          </div>
+          <div class="cost-cell recommended">
+            <div class="lbl">Recommended path<span class="tip">The cheapest model and configuration that meets your workload requirements, after applying all eligible cost levers (batch, caching, right-sizing, effort).</span></div>
+            <div class="val" id="cost-recommended">—</div>
+            <div class="sub" id="cost-recommended-sub">effective monthly</div>
+          </div>
+          <div class="cost-cell savings">
+            <div class="lbl">Monthly savings<span class="tip">The difference between the frontier baseline and the recommended path. This is how much you save per month by following the engine's recommendation.</span></div>
+            <div class="val" id="cost-savings">—</div>
+            <div class="sub" id="cost-savings-sub">vs frontier</div>
+          </div>
+        </div>
+
+        <div class="cost-bar-wrap">
+          <div class="cost-bar"><div class="fill" id="cost-bar-fill" style="width:0%"></div></div>
+          <div class="cost-bar-legend">
+            <span>$0</span>
+            <span id="bar-legend-mid">recommended</span>
+            <span id="bar-legend-end">baseline</span>
+          </div>
+        </div>
+      </div>
+
+      <section class="alts">
+        <h2>Top eligible candidates</h2>
+        <table class="alts-table">
+          <thead>
+            <tr>
+              <th>Provider</th>
+              <th>Model</th>
+              <th>Tier</th>
+              <th>Eff. input $/M</th>
+              <th>Eff. output $/M</th>
+              <th>Monthly</th>
+            </tr>
+          </thead>
+          <tbody id="alts-body"></tbody>
+        </table>
+      </section>
+
+      <div class="levers">
+        <h2>Cost levers applied</h2>
+        <div id="levers-list"></div>
+      </div>
+
+      <div class="trace">
+        <h2>Decision trace</h2>
+        <div id="trace-list"></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn primary" id="btn-export">Export JSON</button>
+        <button class="btn" id="btn-copy">Copy summary</button>
+      </div>
+    </div>
+  </main>
+  </div>
+
+  <div class="tab-panel" id="tab-methodology">
+    <div class="content-section">
+      <h3>How the Decision Engine Works</h3>
+      <p>The engine walks a <strong>deterministic six-rule tree</strong> in fixed order. Same inputs always produce the same outputs and the same trace. The philosophy is: <strong>cheapest viable</strong>, where viability is enforced by tier filters and compliance gates — not by judgment.</p>
+
+      <h4>Rule 1 — Async or Real-time?</h4>
+      <p>If the workload is asynchronous (hours-OK), the Batch API lever activates — applying a <strong>0.5× multiplier</strong> to both input and output tokens. Real-time and near-real-time workloads use standard per-token rates.</p>
+
+      <h4>Rule 2 — Simple or Complex?</h4>
+      <p>The quality bar and task type together set a <strong>tier band</strong> [min, max] for eligible models. Two floors apply — the higher one wins:</p>
+      <table>
+        <thead><tr><th>Quality</th><th>Min Tier</th><th>Max Tier</th></tr></thead>
+        <tbody>
+          <tr><td>Good-enough</td><td>1</td><td>2</td></tr>
+          <tr><td>Production</td><td>2</td><td>3</td></tr>
+          <tr><td>High</td><td>3</td><td>4</td></tr>
+          <tr><td>Frontier</td><td>4</td><td>4</td></tr>
+        </tbody>
+      </table>
+      <p>Task floors: classification/extraction = tier 1, chat/summarization/coding = tier 2, reasoning/agent = tier 3. Reasoning and agent tasks get a +1 buffer so the engine considers one tier above the floor.</p>
+
+      <h4>Rule 3 — Repeated Context or One-off?</h4>
+      <p>Sets the cache hit rate for models that support prompt caching:</p>
+      <table>
+        <thead><tr><th>Reuse Pattern</th><th>Cache Hit Rate</th><th>Effect</th></tr></thead>
+        <tbody>
+          <tr><td>One-off</td><td>0%</td><td>Caching disabled</td></tr>
+          <tr><td>Repeated prefix</td><td>70%</td><td>System prompts, few-shot scaffolding</td></tr>
+          <tr><td>Heavy document reuse</td><td>90%</td><td>Same document referenced repeatedly</td></tr>
+        </tbody>
+      </table>
+      <p>Cached input is priced at ~10% of base rate. Formula: <code>eff_input = (1 − hit) × base + hit × cached_rate</code></p>
+
+      <h4>Rule 4 — Compliance or Residency Need?</h4>
+      <p>Filters the candidate set by data residency or deployment constraint:</p>
+      <ul>
+        <li><strong>None</strong> — all providers eligible, no premium</li>
+        <li><strong>US residency</strong> — filter to US/global providers, +10% premium</li>
+        <li><strong>EU residency</strong> — filter to EU-eligible providers only</li>
+        <li><strong>Self-host</strong> — filter to open-weight models only (currently Mistral Small 4, Phi-4 mini, Phi-4)</li>
+      </ul>
+      <p>If compliance leaves an empty candidate set, the engine returns an error rather than silently relaxing constraints.</p>
+
+      <h4>Rule 5 — Bursty or Steady-state?</h4>
+      <p>Steady-state high-volume workloads (&gt;60% utilization) surface a note recommending provisioned capacity (Microsoft Foundry PTU). Cost is not algorithmically adjusted — PTU sizing is workload-dependent.</p>
+
+      <h4>Rule 6 — Lowest-cost Eligible Model</h4>
+      <p>For every surviving candidate, compute monthly cost with all levers stacked:</p>
+      <p><code>monthly = eff_input × vol_in + eff_output × vol_out × effort_factor</code></p>
+      <p>Where <strong>effort_factor</strong> = 0.65 for models with reasoning effort control (when quality ≠ frontier). This reduces output token consumption by ~35%.</p>
+      <p>Sort ascending by cost. Index 0 is the winner. The next 5 appear in the alternatives table.</p>
+    </div>
+
+    <div class="content-section">
+      <h3>Cost Levers</h3>
+      <table>
+        <thead><tr><th>Lever</th><th>When It Fires</th><th>Impact</th></tr></thead>
+        <tbody>
+          <tr><td>Batch processing</td><td>Async latency + model supports batch</td><td>−50% both input &amp; output</td></tr>
+          <tr><td>Prompt caching</td><td>Repeated/heavy reuse + model supports cache</td><td>Up to −90% on cached input</td></tr>
+          <tr><td>Reasoning effort</td><td>Quality ≠ frontier + model has effort param</td><td>−35% output tokens</td></tr>
+          <tr><td>Right-sizing</td><td>Winner is below frontier tier</td><td>Varies (50–95% vs baseline)</td></tr>
+          <tr><td>Self-host accounting</td><td>Open-weight model selected</td><td>Fixed compute vs per-token</td></tr>
+          <tr><td>Residency premium</td><td>US compliance required</td><td>+10% on all rates</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="content-section">
+      <h3>Data Schema</h3>
+      <p>The engine accepts <strong>7 dimensions</strong> plus monthly volume as inputs, and produces a structured JSON result. All money values are in USD. Token volumes are in millions (MTok).</p>
+
+      <h4>Input Dimensions</h4>
+      <table>
+        <thead><tr><th>Field</th><th>Values</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td>task</td><td>classification, extraction, chat, summarization, reasoning, coding, agent</td><td>Determines minimum model tier</td></tr>
+          <tr><td>latency</td><td>realtime, near, async</td><td>Enables/disables batch lever</td></tr>
+          <tr><td>reuse</td><td>oneoff, repeated, heavy</td><td>Sets cache hit rate (0/70/90%)</td></tr>
+          <tr><td>context</td><td>small, medium, large</td><td>Flags context-size warnings</td></tr>
+          <tr><td>quality</td><td>good-enough, production, high, frontier</td><td>Sets quality tier floor</td></tr>
+          <tr><td>compliance</td><td>none, us, eu, selfhost</td><td>Filters providers, applies premiums</td></tr>
+          <tr><td>throughput</td><td>low, bursty, steady</td><td>Triggers PTU recommendations</td></tr>
+        </tbody>
+      </table>
+
+      <h4>Output Structure</h4>
+      <p>The JSON export includes: recommendation (provider, model, effective rates, monthly cost, why-cheaper), baseline comparison (GPT-5.5 real-time), savings (dollars and percent), levers applied (with kind: savings or note), up to 4 alternatives, and the full decision trace.</p>
+
+      <h4>Baseline Definition</h4>
+      <p>GPT-5.5 real-time, no caching, no batching, no effort tuning: <code>baseline = $5.00 × vol_in + $30.00 × vol_out</code>. Chosen as the frontier-tier reference point that teams most commonly default to.</p>
+
+      <h4>Invariants</h4>
+      <ul>
+        <li>Empty candidate set → error (never silently relaxes constraints)</li>
+        <li>Lower tier wins at equal effective rates (monotonicity)</li>
+        <li>Batch reduces both input and output equally</li>
+        <li>Caching applies only to input tokens — output is never cached</li>
+        <li>Effort reduces output volume, not output rate</li>
+        <li>Residency premium multiplies both input and output rates</li>
+        <li>Trace order always matches rule order</li>
+        <li>Savings is always baseline − recommended (never negative-as-positive)</li>
+      </ul>
+    </div>
+
+    <div class="content-section">
+      <h3>Model Catalog (16 Models)</h3>
+      <p>When adding a model: (1) add to the <code>MODELS</code> array in index.html, (2) add pricing to pricing-sources.md with verification date, (3) update test cases if cheapest-path changes.</p>
+      <table>
+        <thead><tr><th>Provider</th><th>Model</th><th>Tier</th><th>Input $/M</th><th>Output $/M</th><th>Cache</th><th>Batch</th><th>Self-host</th></tr></thead>
+        <tbody>
+          <tr><td>Mistral</td><td>Ministral 3B</td><td>T1</td><td>$0.10</td><td>$0.10</td><td>—</td><td>✓</td><td>—</td></tr>
+          <tr><td>Mistral</td><td>Mistral Small 4</td><td>T2</td><td>$0.10</td><td>$0.30</td><td>—</td><td>✓</td><td>✓</td></tr>
+          <tr><td>Mistral</td><td>Large 3</td><td>T3</td><td>$0.50</td><td>$1.50</td><td>—</td><td>✓</td><td>—</td></tr>
+          <tr><td>Mistral</td><td>Codestral</td><td>T2</td><td>$0.30</td><td>$0.90</td><td>—</td><td>✓</td><td>—</td></tr>
+          <tr><td>OpenAI</td><td>GPT-5.4 nano</td><td>T1</td><td>$0.20</td><td>$1.25</td><td>✓</td><td>✓</td><td>—</td></tr>
+          <tr><td>OpenAI</td><td>GPT-5.4 mini</td><td>T2</td><td>$0.75</td><td>$4.50</td><td>✓</td><td>✓</td><td>—</td></tr>
+          <tr><td>OpenAI</td><td>GPT-5.4</td><td>T3</td><td>$2.50</td><td>$15.00</td><td>✓</td><td>✓</td><td>—</td></tr>
+          <tr><td>OpenAI</td><td>GPT-5.5</td><td>T4</td><td>$5.00</td><td>$30.00</td><td>✓</td><td>✓</td><td>—</td></tr>
+          <tr><td>Anthropic</td><td>Claude Haiku 4.5</td><td>T1</td><td>$1.00</td><td>$5.00</td><td>✓</td><td>✓</td><td>—</td></tr>
+          <tr><td>Anthropic</td><td>Claude Sonnet 4.6</td><td>T3</td><td>$3.00</td><td>$15.00</td><td>✓</td><td>✓</td><td>—</td></tr>
+          <tr><td>Anthropic</td><td>Claude Opus 4.8</td><td>T4</td><td>$5.00</td><td>$25.00</td><td>✓</td><td>✓</td><td>—</td></tr>
+          <tr><td>Google Gemini</td><td>Gemini 3.5 Flash-Lite</td><td>T1</td><td>$0.25</td><td>$1.50</td><td>✓</td><td>✓</td><td>—</td></tr>
+          <tr><td>Microsoft Foundry</td><td>Foundry GPT-5.4 mini</td><td>T2</td><td>$0.75</td><td>$4.50</td><td>✓</td><td>✓</td><td>—</td></tr>
+          <tr><td>Microsoft Foundry</td><td>Foundry GPT-5.4</td><td>T3</td><td>$2.50</td><td>$15.00</td><td>✓</td><td>✓</td><td>—</td></tr>
+          <tr><td>Microsoft Foundry</td><td>Phi-4 mini</td><td>T1</td><td>$0.075</td><td>$0.30</td><td>—</td><td>✓</td><td>✓</td></tr>
+          <tr><td>Microsoft Foundry</td><td>Phi-4</td><td>T2</td><td>$0.125</td><td>$0.50</td><td>—</td><td>✓</td><td>✓</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tab-cost-opt">
+    <div class="content-section">
+      <h3>Universal Cost Optimization Strategies</h3>
+      <p>These techniques apply across all AI providers. Applying them in combination produces compound savings.</p>
+
+      <h4>1. Model Right-Sizing (50–95% savings)</h4>
+      <p>Start with the <strong>smallest model that meets quality requirements</strong>. Most production workloads do not need frontier-tier models. A practical rule: begin with the cheapest model and only move up if evals or user feedback show a quality gap.</p>
+      <table>
+        <thead><tr><th>Task Complexity</th><th>Recommended Tier</th><th>Example Models</th></tr></thead>
+        <tbody>
+          <tr><td>Simple (classification, extraction)</td><td>Nano / Mini</td><td>Ministral 3B, Phi-4 mini, GPT-5.4 nano, Flash-Lite</td></tr>
+          <tr><td>Standard (chat, summarization)</td><td>Mid-tier</td><td>Mistral Small 4, Phi-4, GPT-5.4 mini</td></tr>
+          <tr><td>Complex (reasoning, coding)</td><td>Standard</td><td>GPT-5.4, Claude Sonnet 4.6, Mistral Large 3</td></tr>
+          <tr><td>Frontier (research, deep analysis)</td><td>Flagship</td><td>GPT-5.5, Claude Opus 4.8</td></tr>
+        </tbody>
+      </table>
+
+      <h4>2. Batch Processing (50% savings)</h4>
+      <p>Use batch for any non-real-time workload. All 5 providers offer ~50% off for batch. This is the easiest lever with zero quality tradeoff — the only cost is latency (typically 24h turnaround).</p>
+
+      <h4>3. Prompt Caching (75–90% input savings)</h4>
+      <p>Cache repeated prefixes — system prompts, policy documents, few-shot examples. Cached tokens are served at ~10% of base rate. Place static content at the beginning of prompts and keep prefixes identical to maximize hit rates.</p>
+
+      <h4>4. Reasoning Effort Control (30–70% savings)</h4>
+      <p>Use the lowest reasoning effort that still solves the task. Models with effort parameters (OpenAI, Anthropic) can dramatically reduce hidden thinking tokens. <strong>Medium is often the best default</strong> — reserve high for genuinely hard cases.</p>
+
+      <h4>5. Token Optimization (10–30% savings)</h4>
+      <p>Set <code>max_tokens</code>, remove unnecessary boilerplate, prefer structured outputs for machine-consumed responses. Summarize long documents before sending to expensive models.</p>
+    </div>
+
+    <div class="content-section">
+      <h3>Provider-Specific Recommendations</h3>
+
+      <div class="provider-block">
+        <h4>Mistral</h4>
+        <p><strong>Pricing:</strong> Ministral 3B ($0.10/$0.10), Small 4 ($0.10/$0.30), Large 3 ($0.50/$1.50), Codestral ($0.30/$0.90)</p>
+        <ul>
+          <li>Lowest per-token rates in the catalog — dominant cost leader at tiers 1–3</li>
+          <li>No prompt caching support, but base rates are so low caching wouldn't help competitors catch up on output cost</li>
+          <li>Small 4 is open-weight (Apache 2.0) — self-hostable for fixed-cost deployment</li>
+          <li>Codestral is purpose-built for code generation at 3× cheaper output than GPT-5.4 mini</li>
+          <li>Batch API: 50% off, 24h turnaround</li>
+        </ul>
+      </div>
+
+      <div class="provider-block">
+        <h4>OpenAI</h4>
+        <p><strong>Pricing:</strong> GPT-5.4 nano ($0.20/$1.25), mini ($0.75/$4.50), GPT-5.4 ($2.50/$15), GPT-5.5 ($5/$30)</p>
+        <ul>
+          <li>Automatic prompt caching on GPT-4o+ — no manual setup required</li>
+          <li>Cached input at 10% of base rate (e.g., $0.075/MTok for GPT-5.4 mini)</li>
+          <li>Batch API: 50% off, separate enqueued-token quota</li>
+          <li><code>reasoning_effort</code> parameter on reasoning-capable models (low/medium/high)</li>
+          <li>Regional residency adds ~10% premium for models released March 2026+</li>
+        </ul>
+      </div>
+
+      <div class="provider-block">
+        <h4>Anthropic (Claude)</h4>
+        <p><strong>Pricing:</strong> Haiku 4.5 ($1/$5), Sonnet 4.6 ($3/$15), Opus 4.5–4.8 ($5/$25)</p>
+        <ul>
+          <li>Explicit prompt caching with two TTLs: 5-min (write 1.25×, read 0.1×) and 1-hour (write 2×, read 0.1×)</li>
+          <li>Best effort control: low/medium/high/xhigh/max — affects all tokens including tool calls and thinking</li>
+          <li>Opus 4.7+ uses a new tokenizer: up to 35% more tokens for equivalent text — factor into migration cost estimates</li>
+          <li>Especially attractive for agentic workflows with heavy prompt reuse</li>
+          <li>Batch API: 50% off, usually &lt;1 hour turnaround</li>
+        </ul>
+      </div>
+
+      <div class="provider-block">
+        <h4>Google Gemini</h4>
+        <p><strong>Pricing:</strong> Flash-Lite 3.5 ($0.25/$1.50) — only model with verified pricing in v0.1</p>
+        <ul>
+          <li>Flash-Lite is a strong low-cost option for high-volume simple tasks</li>
+          <li>Context caching: both implicit (auto on 2.5+) and explicit (manual TTL)</li>
+          <li>Four pricing tiers: Standard, Batch (~50% off), Flex (~50% off), Priority (1.8× premium)</li>
+          <li>Flash and Pro models omitted from v0.1 pending verified pricing</li>
+        </ul>
+      </div>
+
+      <div class="provider-block">
+        <h4>Microsoft Foundry</h4>
+        <p><strong>Pricing:</strong> Foundry GPT-5.4 mini ($0.75/$4.50), GPT-5.4 ($2.50/$15), Phi-4 mini ($0.075/$0.30), Phi-4 ($0.125/$0.50)</p>
+        <ul>
+          <li>OpenAI models available with EU residency (not available on direct OpenAI)</li>
+          <li>Provisioned Throughput (PTU): fixed hourly capacity, cheaper than pay-per-token above ~60–70% utilization. Cached tokens are FREE on PTU.</li>
+          <li>Phi-4 models are Microsoft-native SLMs, open-weight (MIT), and self-hostable</li>
+          <li>Phi-4 mini at $0.075 input — cheapest input rate in the entire catalog</li>
+          <li>Phi-4 at $0.125/$0.50 competes with Mistral Small 4 at $0.10/$0.30 with Azure ecosystem support</li>
+          <li>Model Router: auto-route to optimal model per request for multi-model architectures</li>
+        </ul>
+      </div>
+
+      <div class="provider-block">
+        <h4>Cohere (Excluded from v0.1)</h4>
+        <p>Cohere is positioned as a retrieval and enterprise workflow provider. Its cost play is architectural — use Embed + Rerank to reduce candidates before sending to expensive generation models. Documented as yielding 90%+ reduction in tokens sent to generation. Pending verified 2026 pricing for inclusion.</p>
+      </div>
+    </div>
+
+    <div class="content-section">
+      <h3>Top 10 Cost Optimization Actions</h3>
+      <table>
+        <thead><tr><th>#</th><th>Action</th><th>Savings</th><th>Effort</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Switch to batch API for non-real-time</td><td>50%</td><td>Low</td></tr>
+          <tr><td>2</td><td>Enable prompt caching (structure prompts correctly)</td><td>75–90% input</td><td>Low</td></tr>
+          <tr><td>3</td><td>Downsize model (test quality with cheaper)</td><td>50–95%</td><td>Medium</td></tr>
+          <tr><td>4</td><td>Use effort=medium instead of high</td><td>30–70%</td><td>Low</td></tr>
+          <tr><td>5</td><td>Set max_tokens appropriately</td><td>10–30%</td><td>Low</td></tr>
+          <tr><td>6</td><td>Use Mistral/Gemini/Phi-4 for simple tasks</td><td>80–95% vs frontier</td><td>Low</td></tr>
+          <tr><td>7</td><td>Implement model cascade (cheap → expensive)</td><td>60–80%</td><td>High</td></tr>
+          <tr><td>8</td><td>PTU/Reserved for steady-state (Microsoft)</td><td>20–40% vs on-demand</td><td>Medium</td></tr>
+          <tr><td>9</td><td>Compaction for long conversations (Claude)</td><td>40–60%</td><td>Low</td></tr>
+          <tr><td>10</td><td>Self-host open-weight models (Mistral, Phi-4)</td><td>50–90% at scale</td><td>High</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tab-about">
+    <div class="content-section">
+      <h3>About This Project</h3>
+      <p>The <strong>AI Inference Cost Optimizer</strong> is a research-driven project that analyzes how organizations can reduce AI inference costs across major cloud providers. As AI adoption accelerates, inference spending is becoming one of the largest and fastest-growing line items in technology budgets — yet most teams lack systematic tools to compare options and identify savings.</p>
+      <p>This decision assistant is the interactive component of that research. It distills findings from 500+ pages of provider documentation into a single, transparent tool that helps engineering and FinOps teams make informed model selection decisions.</p>
+    </div>
+
+    <div class="content-section">
+      <h3>What This Tool Does</h3>
+
+      <p>Successful AI applications require balancing <strong>three competing objectives</strong>:</p>
+
+      <div class="triad">
+        <div class="triad-item">
+          <span class="triad-icon">◎</span>
+          <div class="triad-label">Accuracy</div>
+          <div class="triad-desc">Model quality &amp; output correctness</div>
+        </div>
+        <div class="triad-sep">⟷</div>
+        <div class="triad-item">
+          <span class="triad-icon">⧖</span>
+          <div class="triad-label">Latency</div>
+          <div class="triad-desc">Response time &amp; user experience</div>
+        </div>
+        <div class="triad-sep">⟷</div>
+        <div class="triad-item">
+          <span class="triad-icon">$</span>
+          <div class="triad-label">Cost</div>
+          <div class="triad-desc">Per-token spend &amp; infrastructure</div>
+        </div>
+      </div>
+
+      <p>There is no universal formula. The optimal solution depends on the business requirements, workload characteristics, and acceptable tradeoffs. This tool helps you <strong>optimize cost without sacrificing enough quality to matter</strong>. It is a rule-based router that explains its reasoning — not a calculator, not a benchmark, and not a recommendation engine that guarantees results.</p>
+    </div>
+
+    <div class="content-section">
+      <h3>Scope &amp; Model Selection</h3>
+      <p>The dashboard evaluates <strong>16 curated models across 5 providers</strong> (Mistral, OpenAI, Anthropic, Google Gemini, Microsoft Foundry). Why 16? It is a deliberately manageable set that covers the models most likely to matter for practical cost comparison, while keeping the rule framework transparent and auditable. The selection prioritizes breadth across price tiers (simple → standard → complex → frontier) over exhaustive catalog coverage.</p>
+      <p>The model catalog includes:</p>
+      <ul>
+        <li><strong>Mistral</strong> — 4 models: Ministral 3B, Small 4, Large 3, Codestral</li>
+        <li><strong>OpenAI</strong> — 4 models: GPT-5.4 nano, GPT-5.4 mini, GPT-5.4, GPT-5.5</li>
+        <li><strong>Anthropic</strong> — 3 models: Claude Haiku 4.5, Claude Sonnet 4.6, Claude Opus 4.8</li>
+        <li><strong>Google Gemini</strong> — 1 model: Gemini 3.5 Flash-Lite (only model with verified pricing)</li>
+        <li><strong>Microsoft Foundry</strong> — 4 models: Foundry GPT-5.4 mini, Foundry GPT-5.4, Phi-4 mini, Phi-4</li>
+      </ul>
+      <p><strong>Cohere</strong> is excluded from v0.1 pending verified 2026 generation pricing. Cohere is better framed as a retrieval/rerank provider — its cost play is architectural (reduce tokens sent to expensive generation models), not per-token.</p>
+    </div>
+
+    <div class="content-section">
+      <h3>Disclaimer</h3>
+      <div class="disclaimer-box">
+        <span class="disc-label">⚠ Important</span>
+        <p>
+          This is a <strong>high-level comparison tool</strong> for directional guidance only. Pricing is a
+          snapshot (verified 2026-05-31) and may change without notice. Quality assessments are based on
+          self-reported tier classifications, not live benchmarks. The tool does not guarantee that the
+          recommended model will meet your specific accuracy, latency, or compliance requirements.
+          Always verify pricing against current provider documentation and run your own evaluations
+          before committing to a production path. No warranty is expressed or implied.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>This prototype is a high-level FinOps decision assistant — not a calculator, not a benchmark suite, and not a guarantee.
+    It scores 16 curated models across 5 providers using a deterministic rule tree (latency → task tier → reuse → residency → throughput → cost-rank),
+    then applies stacking cost levers (batch, caching, effort, right-sizing). Pricing is a snapshot (2026-05-31), not a live feed.
+    Verify against current provider docs and run your own quality evaluations before committing.</p>
+    <div class="links">
+      <a href="pricing-sources.md" target="_blank">pricing sources</a>
+    </div>
+  </footer>
+</div>
+
+<!-- JSON export modal -->
+<div class="json-modal" id="json-modal">
+  <div class="json-modal-inner">
+    <div class="json-modal-head">
+      <h3>JSON result</h3>
+      <button class="json-modal-close" id="modal-close">close ✕</button>
+    </div>
+    <div class="json-modal-body">
+      <pre id="json-out"></pre>
+    </div>
+    <div class="json-modal-head" style="border-top: 1px solid var(--border); border-bottom: none; justify-content: flex-end; gap: 8px;">
+      <button class="btn" id="btn-copy-json">copy</button>
+      <button class="btn" id="btn-download-json">download .json</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════════
+   AI Inference Cost Optimizer — Decision engine
+   ----------------------------------------------------------------
+   Pricing snapshot: 2026-05-31
+   Sources: developers.openai.com, platform.claude.com,
+            ai.google.dev, docs.mistral.ai, learn.microsoft.com,
+            azure.microsoft.com/pricing (Phi-4)
+   ════════════════════════════════════════════════════════════════ */
+
+/* ─── Pricing table ──────────────────────────────────────────────
+   tier: 1 simple · 2 standard · 3 complex · 4 frontier
+   prices in $/M tokens
+   residency: where the model can legally serve from
+   selfhost: open-weight, self-deployable
+*/
+const MODELS = [
+  // Mistral
+  { id: 'ministral-3b',     provider: 'Mistral',   name: 'Ministral 3B',          tier: 1, input: 0.10, output: 0.10,  cached_input: null, batch: true, cache: false, effort: false, residency: ['global','us','eu'], selfhost: false },
+  { id: 'mistral-small-4',  provider: 'Mistral',   name: 'Mistral Small 4',       tier: 2, input: 0.10, output: 0.30,  cached_input: null, batch: true, cache: false, effort: false, residency: ['global','us','eu'], selfhost: true,  note: 'open-weight (Apache 2.0)' },
+  { id: 'mistral-large-3',  provider: 'Mistral',   name: 'Mistral Large 3',       tier: 3, input: 0.50, output: 1.50,  cached_input: null, batch: true, cache: false, effort: false, residency: ['global','us','eu'], selfhost: false },
+  { id: 'codestral',        provider: 'Mistral',   name: 'Codestral',             tier: 2, input: 0.30, output: 0.90,  cached_input: null, batch: true, cache: false, effort: false, residency: ['global','us','eu'], selfhost: false, specialty: 'coding' },
+
+  // OpenAI
+  { id: 'gpt-5.4-nano',     provider: 'OpenAI',    name: 'GPT-5.4 nano',          tier: 1, input: 0.20, output: 1.25,  cached_input: 0.02, batch: true, cache: true,  effort: false, residency: ['global','us'],      selfhost: false },
+  { id: 'gpt-5.4-mini',     provider: 'OpenAI',    name: 'GPT-5.4 mini',          tier: 2, input: 0.75, output: 4.50,  cached_input: 0.075,batch: true, cache: true,  effort: false, residency: ['global','us'],      selfhost: false },
+  { id: 'gpt-5.4',          provider: 'OpenAI',    name: 'GPT-5.4',               tier: 3, input: 2.50, output: 15.00, cached_input: 0.25, batch: true, cache: true,  effort: true,  residency: ['global','us'],      selfhost: false },
+  { id: 'gpt-5.5',          provider: 'OpenAI',    name: 'GPT-5.5',               tier: 4, input: 5.00, output: 30.00, cached_input: 0.50, batch: true, cache: true,  effort: true,  residency: ['global','us'],      selfhost: false },
+
+  // Anthropic
+  { id: 'haiku-4.5',        provider: 'Anthropic', name: 'Claude Haiku 4.5',      tier: 1, input: 1.00, output: 5.00,  cached_input: 0.10, batch: true, cache: true,  effort: true,  residency: ['global','us'],      selfhost: false },
+  { id: 'sonnet-4.6',       provider: 'Anthropic', name: 'Claude Sonnet 4.6',     tier: 3, input: 3.00, output: 15.00, cached_input: 0.30, batch: true, cache: true,  effort: true,  residency: ['global','us'],      selfhost: false, specialty: 'agent' },
+  { id: 'opus-4.8',         provider: 'Anthropic', name: 'Claude Opus 4.8',       tier: 4, input: 5.00, output: 25.00, cached_input: 0.50, batch: true, cache: true,  effort: true,  residency: ['global','us'],      selfhost: false, specialty: 'agent' },
+
+  // Google Gemini  (only models with explicitly documented 2026-05-31 prices)
+  { id: 'gemini-flash-lite',provider: 'Gemini',    name: 'Gemini 3.5 Flash-Lite', tier: 1, input: 0.25, output: 1.50,  cached_input: 0.025,batch: true, cache: true,  effort: false, residency: ['global','us','eu'], selfhost: false },
+
+  // Microsoft Foundry — OpenAI-hosted models, available with PTU/regional options
+  { id: 'foundry-gpt54-mini', provider: 'Microsoft', name: 'Foundry · GPT-5.4 mini', tier: 2, input: 0.75, output: 4.50, cached_input: 0.075, batch: true, cache: true, effort: false, residency: ['global','us','eu'], selfhost: false, note: 'PTU available' },
+  { id: 'foundry-gpt54',      provider: 'Microsoft', name: 'Foundry · GPT-5.4',      tier: 3, input: 2.50, output: 15.00,cached_input: 0.25,  batch: true, cache: true, effort: true,  residency: ['global','us','eu'], selfhost: false, note: 'PTU available' },
+
+  // Microsoft Phi-4 — Microsoft's own SLMs, open-weight (MIT), self-hostable
+  { id: 'phi-4-mini',         provider: 'Microsoft', name: 'Phi-4 mini',              tier: 1, input: 0.075,output: 0.30,  cached_input: null,  batch: true, cache: false, effort: false, residency: ['global','us','eu'], selfhost: true,  note: 'open-weight (MIT) · 3.8B params · 128K ctx' },
+  { id: 'phi-4',              provider: 'Microsoft', name: 'Phi-4',                   tier: 2, input: 0.125,output: 0.50,  cached_input: null,  batch: true, cache: false, effort: false, residency: ['global','us','eu'], selfhost: true,  note: 'open-weight (MIT) · 14B params · 16K ctx' },
+];
+
+const BASELINE_ID = 'gpt-5.5';
+
+/* shared formatter used by both decide() and renderResult() */
+function fmtInline(n) {
+  if (n >= 10000) return '$' + Math.round(n).toLocaleString();
+  if (n >= 100)  return '$' + n.toFixed(0);
+  if (n >= 10)   return '$' + n.toFixed(1);
+  return '$' + n.toFixed(2);
+}
+
+/* ─── Mappings ───────────────────────────────────────────────── */
+const QUALITY_MIN_TIER = { 'good-enough': 1, 'production': 2, 'high': 3, 'frontier': 4 };
+// allow models up to (min+1) above the floor so we get one upgrade buffer
+const QUALITY_MAX_TIER = { 'good-enough': 2, 'production': 3, 'high': 4, 'frontier': 4 };
+
+const TASK_TIER_FLOOR = {
+  classification: 1, extraction: 1,
+  chat: 2, summarization: 2,
+  reasoning: 3, coding: 2, agent: 3,
+};
+
+const TASK_TIER_BUFFER = {
+  // tasks that benefit from one tier above
+  reasoning: 1, agent: 1, coding: 0,
+};
+
+/* ─── Decision engine ────────────────────────────────────────── */
+function decide(inputs) {
+  const trace = [];
+  const levers = [];
+  const log = (text, kind) => trace.push({ text, kind: kind || '' });
+
+  log(`STEP 1  rules engine init  →  ${MODELS.length} models in catalog`, 'ok');
+
+  /* Step 1: Async or real-time */
+  const isAsync = inputs.latency === 'async';
+  const isNear  = inputs.latency === 'near';
+  log(`STEP 2  latency = ${inputs.latency}  →  ${isAsync ? 'batch eligible' : 'real-time path'}`, 'ok');
+
+  /* Step 2: Quality / task tier */
+  const qFloor = QUALITY_MIN_TIER[inputs.quality];
+  const taskFloor = TASK_TIER_FLOOR[inputs.task] || 1;
+  const buffer = TASK_TIER_BUFFER[inputs.task] || 0;
+  const minTier = Math.max(qFloor, taskFloor);
+  const maxTier = Math.min(4, Math.max(QUALITY_MAX_TIER[inputs.quality], minTier + buffer));
+  log(`STEP 3  quality=${inputs.quality} task=${inputs.task}  →  tier ∈ [${minTier}, ${maxTier}]`, 'ok');
+
+  /* Step 3: Reuse → caching */
+  const cacheHitRate = inputs.reuse === 'heavy' ? 0.90 : inputs.reuse === 'repeated' ? 0.70 : 0;
+  log(`STEP 4  reuse=${inputs.reuse}  →  cache hit rate ${(cacheHitRate*100).toFixed(0)}%`, 'ok');
+
+  /* Step 4: Compliance */
+  let complianceFilter = (m) => true;
+  let residencyPremium = 1.0;
+  if (inputs.compliance === 'selfhost') {
+    complianceFilter = (m) => m.selfhost === true;
+    log(`STEP 5  compliance=self-host  →  filter to open-weight models`, 'kill');
+  } else if (inputs.compliance === 'us') {
+    complianceFilter = (m) => m.residency.includes('us') || m.residency.includes('global');
+    residencyPremium = 1.10;
+    log(`STEP 5  compliance=US residency  →  +10% premium on supporting providers`, 'kill');
+  } else if (inputs.compliance === 'eu') {
+    complianceFilter = (m) => m.residency.includes('eu');
+    log(`STEP 5  compliance=EU residency  →  filter to EU-eligible providers`, 'kill');
+  } else {
+    log(`STEP 5  compliance=none  →  no filter`, 'ok');
+  }
+
+  /* Step 5: Throughput */
+  let throughputNote = null;
+  if (inputs.throughput === 'steady' && !isAsync) {
+    throughputNote = 'Steady-state high utilization → consider Microsoft Foundry PTU for fixed-capacity pricing (cheaper than pay-per-token above ~60–70% utilization).';
+    log(`STEP 6  throughput=steady-state  →  PTU note added`, 'ok');
+  } else if (inputs.throughput === 'bursty') {
+    log(`STEP 6  throughput=bursty  →  pay-per-token preferred (no PTU)`, 'ok');
+  } else {
+    log(`STEP 6  throughput=low  →  pay-per-token default`, 'ok');
+  }
+
+  /* Step 6: Effort lever eligibility */
+  // Effort applies when the model supports it AND the quality bar isn't frontier-grade.
+  // Reasoning/agent tasks already at high quality keep effort=high → don't reduce.
+  const allowEffortReduction = inputs.quality !== 'frontier' && !(inputs.task === 'reasoning' && inputs.quality === 'high');
+  log(`STEP 7  effort lever = ${allowEffortReduction ? 'eligible (reduce to medium)' : 'NOT applied (quality demands high effort)'}`, 'ok');
+
+  /* Specialty matching — push Codestral up for coding, Sonnet/Opus for agent */
+  const specialtyBoost = (m) => {
+    if (inputs.task === 'coding' && m.specialty === 'coding') return -0.0001; // tiny cost nudge
+    return 0;
+  };
+
+  /* Context-size warning */
+  let contextNote = null;
+  if (inputs.context === 'large') {
+    contextNote = 'Large context (>32K) — caching becomes a primary lever. Some providers apply long-context surcharges; prefer chunking + RAG where viable.';
+    log(`STEP 8  context=large  →  prefer cache-capable models`, 'ok');
+  }
+
+  /* ─── Score every model ─── */
+  const candidates = MODELS.filter(m => m.tier >= minTier && m.tier <= maxTier).filter(complianceFilter);
+
+  log(`STEP 9  candidates after filters  →  ${candidates.length} models`, 'ok');
+
+  const scored = candidates.map(m => {
+    let effInput  = m.input;
+    let effOutput = m.output;
+
+    // Caching
+    let cacheApplied = false;
+    if (m.cache && cacheHitRate > 0) {
+      effInput = (1 - cacheHitRate) * m.input + cacheHitRate * m.cached_input;
+      cacheApplied = true;
+    }
+
+    // Batch
+    let batchApplied = false;
+    if (isAsync && m.batch) {
+      effInput  *= 0.5;
+      effOutput *= 0.5;
+      batchApplied = true;
+    }
+
+    // Effort — reduces output token consumption by ~35%
+    const effortFactor = (allowEffortReduction && m.effort) ? 0.65 : 1.0;
+    const effortApplied = effortFactor < 1.0;
+
+    // Residency
+    effInput  *= residencyPremium;
+    effOutput *= residencyPremium;
+
+    const monthlyCost =
+      effInput  * inputs.volIn +
+      effOutput * inputs.volOut * effortFactor +
+      specialtyBoost(m);
+
+    return {
+      model: m,
+      effInput, effOutput,
+      effortFactor,
+      cacheApplied, batchApplied, effortApplied,
+      monthlyCost,
+    };
+  });
+
+  // Coding specialty bumps Codestral to top when relevant
+  scored.sort((a, b) => a.monthlyCost - b.monthlyCost);
+
+  const winner = scored[0];
+  if (!winner) {
+    return { error: 'No eligible models — constraints are too restrictive.', trace };
+  }
+
+  log(`STEP 10 winner  →  ${winner.model.provider} · ${winner.model.name}  @  $${winner.monthlyCost.toFixed(2)}/mo`, 'ok');
+
+  /* ─── Levers list (annotated) ─── */
+  if (winner.batchApplied) {
+    levers.push({
+      name: 'Batch processing',
+      desc: 'Async workloads route to Batch API — 50% off both input and output tokens.',
+      impact: '−50%',
+      kind: 'savings',
+    });
+  }
+  if (winner.cacheApplied) {
+    const hitPct = (cacheHitRate * 100).toFixed(0);
+    levers.push({
+      name: 'Prompt caching',
+      desc: `${hitPct}% of input tokens served from cache at 10% of base rate (≈90% off cached input).`,
+      impact: `−${Math.round(cacheHitRate * 81)}% input`,
+      kind: 'savings',
+    });
+  }
+  if (winner.effortApplied) {
+    levers.push({
+      name: 'Reasoning effort = medium',
+      desc: 'Lower effort generates dramatically fewer thinking and output tokens for the same task.',
+      impact: '−35% output',
+      kind: 'savings',
+    });
+  }
+  if (winner.model.tier < 4) {
+    const tierLabel = ['','simple','standard','complex','frontier'][winner.model.tier];
+    levers.push({
+      name: `Right-sized model (tier ${winner.model.tier} · ${tierLabel})`,
+      desc: 'Smallest model that meets the stated quality bar — the highest-leverage lever in most workloads.',
+      impact: `−${Math.round(100 - (winner.model.input + winner.model.output) / (MODELS.find(m=>m.id===BASELINE_ID).input + MODELS.find(m=>m.id===BASELINE_ID).output) * 100)}% base`,
+      kind: 'savings',
+    });
+  }
+  if (winner.model.selfhost && inputs.compliance === 'selfhost') {
+    levers.push({
+      name: 'Self-hosted open weights',
+      desc: 'Compliance forces open-weight deployment — costs become fixed compute, not per-token.',
+      impact: 'fixed cost',
+      kind: 'note',
+    });
+  }
+  if (residencyPremium > 1) {
+    levers.push({
+      name: 'Residency premium',
+      desc: `Compliance requires regional hosting — +${((residencyPremium-1)*100).toFixed(0)}% premium applied.`,
+      impact: `+${((residencyPremium-1)*100).toFixed(0)}%`,
+      kind: 'note',
+    });
+  }
+  if (throughputNote) {
+    levers.push({ name: 'Infrastructure note', desc: throughputNote, impact: 'see docs', kind: 'note' });
+  }
+  if (contextNote) {
+    levers.push({ name: 'Context-size note', desc: contextNote, impact: 'see docs', kind: 'note' });
+  }
+  if (winner.model.note) {
+    levers.push({ name: 'Model note', desc: winner.model.note, impact: '—', kind: 'note' });
+  }
+
+  // Self-host clarification — the per-token dollar figure isn't your real self-host cost.
+  if (inputs.compliance === 'selfhost' && winner.model.selfhost) {
+    levers.push({
+      name: 'Self-host accounting',
+      desc: 'Displayed cost is the per-token-equivalent for comparison. Actual self-host cost is fixed compute (GPU $/hr) — typically attractive above sustained ≈$1–5K/mo API spend; model against your traffic.',
+      impact: 'see infra',
+      kind: 'note',
+    });
+  }
+
+  // Specialty alerts — if a specialty-tuned model exists for the task but cost ruled it out,
+  // surface it so the user can knowingly trade quality for cost.
+  const specialtyOf = (task) => task === 'coding' ? 'coding' : (task === 'agent' ? 'agent' : null);
+  const targetSpec = specialtyOf(inputs.task);
+  if (targetSpec) {
+    const specCandidates = scored.filter(s => s.model.specialty === targetSpec && s.model.id !== winner.model.id);
+    if (specCandidates.length) {
+      const sc = specCandidates[0];
+      const delta = sc.monthlyCost - winner.monthlyCost;
+      levers.push({
+        name: `${targetSpec === 'coding' ? 'Coding' : 'Agent'}-specialty alternative`,
+        desc: `${sc.model.provider} · ${sc.model.name} is tuned for ${targetSpec === 'coding' ? 'code generation' : 'agentic workflows'} and may yield better quality at this task. Costs ${fmtInline(delta)}/mo more (${fmtInline(sc.monthlyCost)}/mo total). Pick it if quality matters more than the cost delta.`,
+        impact: `+${fmtInline(delta)}`,
+        kind: 'note',
+      });
+    }
+  }
+
+  /* ─── Baseline ─── */
+  const baseModel = MODELS.find(m => m.id === BASELINE_ID);
+  const baselineCost = baseModel.input * inputs.volIn + baseModel.output * inputs.volOut;
+
+  /* ─── "Why cheaper" one-liner ─── */
+  const why = (() => {
+    const parts = [];
+    if (winner.model.tier < 4) parts.push('right-sized to a smaller tier');
+    if (winner.cacheApplied) parts.push('most input served from cache');
+    if (winner.batchApplied) parts.push('batched at half price');
+    if (winner.effortApplied) parts.push('reasoning effort capped to medium');
+    if (parts.length === 0) parts.push('this is the cheapest eligible model for the constraints given');
+    return parts.join(' · ') + '.';
+  })();
+
+  return {
+    winner,
+    scored,
+    baseModel,
+    baselineCost,
+    levers,
+    trace,
+    why,
+    inputs,
+  };
+}
+
+/* ─── Rendering ──────────────────────────────────────────────── */
+const $ = (id) => document.getElementById(id);
+
+const fmt = fmtInline;
+
+function pct(n) {
+  if (n >= 0.1) return (n * 100).toFixed(0) + '%';
+  return (n * 100).toFixed(1) + '%';
+}
+
+function renderResult(res) {
+  if (res.error) {
+    $('verdict-model').innerHTML = '<span class="provider">—</span>';
+    $('verdict-because').textContent = res.error;
+    return;
+  }
+
+  const w = res.winner;
+  $('verdict-model').innerHTML = `
+    <span class="provider">${w.model.provider}</span>
+    <span class="slash">/</span>
+    <span class="model-name">${w.model.name}</span>
+  `;
+  $('verdict-because').textContent = 'Cheaper because: ' + res.why;
+
+  // Costs
+  $('cost-baseline').textContent     = fmt(res.baselineCost);
+  $('cost-baseline-sub').textContent = `${res.baseModel.name} · real-time · no opt`;
+  $('cost-recommended').textContent  = fmt(w.monthlyCost);
+  $('cost-recommended-sub').textContent = `${(w.effInput).toFixed(2)} in · ${(w.effOutput).toFixed(2)} out per M`;
+
+  const savings = res.baselineCost - w.monthlyCost;
+  const savingsPct = savings / res.baselineCost;
+  $('cost-savings').textContent  = savings > 0 ? fmt(savings) : '—';
+  $('cost-savings-sub').textContent = savings > 0 ? `${pct(savingsPct)} off baseline` : 'no savings — baseline is cheapest';
+
+  // Bar
+  const fillPct = res.baselineCost > 0 ? Math.min(100, (w.monthlyCost / res.baselineCost) * 100) : 0;
+  $('cost-bar-fill').style.width = fillPct + '%';
+  $('bar-legend-mid').textContent = `recommended · ${fmt(w.monthlyCost)}`;
+  $('bar-legend-end').textContent = `baseline · ${fmt(res.baselineCost)}`;
+
+  // Levers
+  const lev = $('levers-list');
+  if (res.levers.length === 0) {
+    lev.innerHTML = '<div class="lever note"><span class="num">—</span><div class="body"><div class="name">No levers applied</div><div class="desc">Constraints already point at the cheapest model.</div></div><span class="impact">—</span></div>';
+  } else {
+    lev.innerHTML = res.levers.map((l, i) => `
+      <div class="lever ${l.kind === 'note' ? 'note' : ''}">
+        <span class="num">${String(i+1).padStart(2,'0')}</span>
+        <div class="body">
+          <div class="name">${escapeHtml(l.name)}</div>
+          <div class="desc">${escapeHtml(l.desc)}</div>
+        </div>
+        <span class="impact">${escapeHtml(l.impact)}</span>
+      </div>
+    `).join('');
+  }
+
+  // Trace
+  $('trace-list').innerHTML = res.trace.map(t => {
+    const cls = 'trace-line' + (t.kind ? ' ' + t.kind : '');
+    const m = t.text.match(/^(STEP \d+)\s+(.+?)\s*(→\s*.+)?$/);
+    if (m) {
+      return `<div class="${cls}"><span class="step">${m[1]}</span>${escapeHtml(m[2])}${m[3] ? ' <span class="arrow">→</span> <span class="val">' + escapeHtml(m[3].replace(/^→\s*/, '')) + '</span>' : ''}</div>`;
+    }
+    return `<div class="${cls}">${escapeHtml(t.text)}</div>`;
+  }).join('');
+
+  // Alternatives table (top 6)
+  const top = res.scored.slice(0, 6);
+  $('alts-body').innerHTML = top.map((s, i) => {
+    const tierLabel = ['','simple','standard','complex','frontier'][s.model.tier];
+    return `
+      <tr class="${i === 0 ? 'winner' : ''}">
+        <td>${escapeHtml(s.model.provider)}</td>
+        <td>${escapeHtml(s.model.name)}</td>
+        <td><span class="tier-badge">T${s.model.tier} · ${tierLabel}</span></td>
+        <td>$${s.effInput.toFixed(3)}</td>
+        <td>$${s.effOutput.toFixed(2)}</td>
+        <td>${fmt(s.monthlyCost)}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ─── State / events ─────────────────────────────────────────── */
+function readInputs() {
+  return {
+    task: $('task').value,
+    latency: $('latency').value,
+    reuse: $('reuse').value,
+    context: $('context').value,
+    quality: $('quality').value,
+    compliance: $('compliance').value,
+    throughput: $('throughput').value,
+    volIn: parseFloat($('vol-in').value) || 0,
+    volOut: parseFloat($('vol-out').value) || 0,
+  };
+}
+
+let currentResult = null;
+
+function recompute() {
+  const inputs = readInputs();
+  currentResult = decide(inputs);
+  renderResult(currentResult);
+}
+
+['task','latency','reuse','context','quality','compliance','throughput','vol-in','vol-out'].forEach(id => {
+  $(id).addEventListener('change', recompute);
+  $(id).addEventListener('input', recompute);
+});
+
+/* ─── JSON export ────────────────────────────────────────────── */
+function buildJsonExport() {
+  if (!currentResult || currentResult.error) return { error: currentResult?.error || 'no result' };
+  const r = currentResult;
+  return {
+    generated_at: new Date().toISOString(),
+    pricing_snapshot_date: '2026-05-31',
+    schema_version: '0.1',
+    inputs: r.inputs,
+    recommendation: {
+      provider: r.winner.model.provider,
+      model: r.winner.model.name,
+      model_id: r.winner.model.id,
+      tier: r.winner.model.tier,
+      effective_per_mtok: {
+        input_usd:  Number(r.winner.effInput.toFixed(4)),
+        output_usd: Number(r.winner.effOutput.toFixed(4)),
+      },
+      monthly_cost_usd: Number(r.winner.monthlyCost.toFixed(2)),
+      why_cheaper: r.why,
+    },
+    baseline: {
+      model: r.baseModel.name,
+      monthly_cost_usd: Number(r.baselineCost.toFixed(2)),
+      assumption: 'frontier model, real-time, no caching, no batching, no effort tuning',
+    },
+    savings: {
+      monthly_usd: Number((r.baselineCost - r.winner.monthlyCost).toFixed(2)),
+      pct_off_baseline: Number(((r.baselineCost - r.winner.monthlyCost) / r.baselineCost).toFixed(4)),
+    },
+    levers_applied: r.levers.map(l => ({ name: l.name, impact: l.impact, kind: l.kind, note: l.desc })),
+    alternatives: r.scored.slice(1, 5).map(s => ({
+      provider: s.model.provider,
+      model: s.model.name,
+      monthly_cost_usd: Number(s.monthlyCost.toFixed(2)),
+      delta_vs_winner_usd: Number((s.monthlyCost - r.winner.monthlyCost).toFixed(2)),
+    })),
+    decision_trace: r.trace.map(t => t.text),
+  };
+}
+
+$('btn-export').addEventListener('click', () => {
+  const out = buildJsonExport();
+  $('json-out').textContent = JSON.stringify(out, null, 2);
+  $('json-modal').classList.add('open');
+});
+
+$('modal-close').addEventListener('click', () => $('json-modal').classList.remove('open'));
+$('json-modal').addEventListener('click', (e) => { if (e.target.id === 'json-modal') $('json-modal').classList.remove('open'); });
+
+$('btn-copy-json').addEventListener('click', () => {
+  navigator.clipboard.writeText($('json-out').textContent);
+  $('btn-copy-json').textContent = 'copied ✓';
+  setTimeout(() => $('btn-copy-json').textContent = 'copy', 1400);
+});
+
+$('btn-download-json').addEventListener('click', () => {
+  const blob = new Blob([$('json-out').textContent], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'finops-decision.json';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+$('btn-copy').addEventListener('click', () => {
+  if (!currentResult || currentResult.error) return;
+  const r = currentResult;
+  const sav = r.baselineCost - r.winner.monthlyCost;
+  const summary = `RECOMMENDED: ${r.winner.model.provider} / ${r.winner.model.name}
+Monthly cost: ${fmt(r.winner.monthlyCost)} (vs ${fmt(r.baselineCost)} baseline)
+Savings: ${fmt(sav)} / mo (${pct(sav/r.baselineCost)} off frontier)
+Levers: ${r.levers.map(l => l.name).join(', ')}
+Why: ${r.why}`;
+  navigator.clipboard.writeText(summary);
+  $('btn-copy').textContent = 'copied ✓';
+  setTimeout(() => $('btn-copy').textContent = 'Copy summary', 1400);
+});
+
+/* ─── Tab switching ──────────────────────────────────────────── */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+/* ─── Initial render ─────────────────────────────────────────── */
+recompute();
+</script>
+</body>
+</html>
