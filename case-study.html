@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Case Study: EDA Copilot — AI Inference Cost Optimizer</title>
+<meta name="description" content="How an LLM-powered chip design assistant cut its AI inference budget from $2,685 to $240 — a 91% reduction using systematic cost optimization." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0c0a;
+    --surface-1: #15140f;
+    --surface-2: #1c1a14;
+    --surface-3: #24211a;
+    --border: #2c2922;
+    --border-strong: #3a3629;
+    --text: #ebe7df;
+    --text-muted: #8a857a;
+    --text-dim: #5a5651;
+    --accent: #d4a259;
+    --accent-soft: #b58944;
+    --warn: #c66b3d;
+    --ok: #7fa37a;
+    --serif: 'Instrument Serif', 'Times New Roman', serif;
+    --sans: 'Geist', -apple-system, system-ui, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--text); font-family: var(--sans); font-weight: 400; font-size: 15px; line-height: 1.55; }
+  body {
+    background-image:
+      radial-gradient(circle at 8% 5%, rgba(212, 162, 89, 0.04) 0%, transparent 35%),
+      radial-gradient(circle at 92% 95%, rgba(198, 107, 61, 0.03) 0%, transparent 40%);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .frame {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 48px 40px 80px;
+  }
+
+  /* ─── Back link ───────────────────────────────────── */
+  .back {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--border-strong);
+    padding-bottom: 1px;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .back:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ─── Header ──────────────────────────────────────── */
+  .page-header {
+    margin-top: 40px;
+    margin-bottom: 48px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+  }
+  .label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(32px, 5vw, 52px);
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+    margin-bottom: 20px;
+  }
+  .subtitle {
+    font-size: 17px;
+    color: var(--text-muted);
+    max-width: 640px;
+    line-height: 1.6;
+  }
+
+  /* ─── Stats bar ───────────────────────────────────── */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 48px;
+  }
+  .stat {
+    background: var(--surface-1);
+    padding: 20px 24px;
+    text-align: center;
+  }
+  .stat-value {
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+  }
+  .stat-value.warn { color: var(--warn); }
+  .stat-value.ok { color: var(--ok); }
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+
+  /* ─── Content ─────────────────────────────────────── */
+  h2 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 26px;
+    margin-top: 48px;
+    margin-bottom: 16px;
+    padding-top: 32px;
+    border-top: 1px solid var(--border);
+  }
+  h2:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
+
+  p {
+    color: var(--text-muted);
+    line-height: 1.7;
+    margin-bottom: 16px;
+    max-width: 720px;
+  }
+
+  ul {
+    list-style: none;
+    margin-bottom: 16px;
+    padding-left: 0;
+  }
+  ul li {
+    position: relative;
+    padding-left: 20px;
+    color: var(--text-muted);
+    line-height: 1.7;
+    margin-bottom: 6px;
+  }
+  ul li::before {
+    content: '›';
+    position: absolute;
+    left: 4px;
+    color: var(--accent-soft);
+    font-weight: 600;
+  }
+
+  strong { color: var(--text); font-weight: 500; }
+
+  /* ─── Technique cards ─────────────────────────────── */
+  .techniques {
+    display: grid;
+    gap: 12px;
+    margin: 24px 0;
+  }
+  .technique {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px 24px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    align-items: baseline;
+  }
+  .technique:hover { border-color: var(--border-strong); }
+  .technique-name {
+    font-weight: 500;
+    color: var(--text);
+    font-size: 14px;
+  }
+  .technique-desc {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-top: 4px;
+    line-height: 1.5;
+  }
+  .technique-saving {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--ok);
+    white-space: nowrap;
+    font-weight: 500;
+  }
+
+  /* ─── CTA card ────────────────────────────────────── */
+  .cta-card {
+    background: var(--surface-2);
+    border: 1px solid var(--accent-soft);
+    border-radius: 8px;
+    padding: 32px;
+    margin-top: 40px;
+    text-align: center;
+  }
+  .cta-card h3 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 22px;
+    margin-bottom: 12px;
+    color: var(--text);
+  }
+  .cta-card p {
+    margin: 0 auto 20px;
+    text-align: center;
+    font-size: 14px;
+  }
+  .cta-links {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .cta-links a {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--bg);
+    background: var(--accent);
+    text-decoration: none;
+    padding: 10px 22px;
+    border-radius: 4px;
+    border: 1px solid var(--accent);
+    transition: background 0.2s, color 0.2s;
+  }
+  .cta-links a:hover {
+    background: transparent;
+    color: var(--accent);
+  }
+  .cta-links a.secondary {
+    background: transparent;
+    color: var(--accent);
+    border-color: var(--accent-soft);
+  }
+  .cta-links a.secondary:hover {
+    background: var(--accent);
+    color: var(--bg);
+  }
+
+  /* ─── Footer ──────────────────────────────────────── */
+  footer {
+    margin-top: 56px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  footer p {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+    margin-bottom: 0;
+  }
+  footer a {
+    color: var(--text-muted);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--border-strong);
+    padding-bottom: 1px;
+    margin-left: 16px;
+  }
+  footer a:hover { color: var(--accent); border-color: var(--accent); }
+
+  @media (max-width: 600px) {
+    .frame { padding: 24px 20px 60px; }
+    .stats { grid-template-columns: 1fr 1fr; }
+    .technique { grid-template-columns: 1fr; }
+    .technique-saving { justify-self: start; }
+  }
+</style>
+</head>
+<body>
+<div class="frame">
+
+  <a class="back" href="index.html">← back to optimizer</a>
+
+  <div class="page-header">
+    <div class="label">Case Study</div>
+    <h1>EDA Copilot</h1>
+    <p class="subtitle">
+      An LLM-powered chip design assistant that uses GraphRAG — knowledge graphs combined with
+      vector retrieval — to answer technical EDA questions. Originally budgeted at $2,685/month,
+      deployed for $240 total. Here's how.
+    </p>
+  </div>
+
+  <!-- ─── Stats ──────────────────────────────────────── -->
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-value warn">$2,685</div>
+      <div class="stat-label">Original Budget</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value ok">$240</div>
+      <div class="stat-label">Actual Spend</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">91%</div>
+      <div class="stat-label">Cost Reduction</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">~$0.01</div>
+      <div class="stat-label">Per Query</div>
+    </div>
+  </div>
+
+  <!-- ─── Project summary ────────────────────────────── -->
+  <h2>The Project</h2>
+  <p>
+    EDA Copilot is a domain-specific technical assistant for chip design engineers. It ingests
+    PDK documentation, timing reports, tool manuals, and community Q&amp;A into a hybrid retrieval
+    system — a Neo4j knowledge graph for structural relationships (tool → version → known bug)
+    combined with a ChromaDB vector store for semantic search across 847 curated corpus chunks.
+    When an engineer asks a question like <em>"Why does my timing fail after upgrading OpenROAD?"</em>
+    or <em>"What is the metal2 spacing rule in SKY130?"</em>, the system retrieves graph facts and
+    text chunks, reranks them with a cross-encoder, and streams a grounded answer via Claude Sonnet
+    with inline citations. The full stack — FastAPI backend, SSE streaming, rate limiting, query
+    logging — runs on a single $12/month VPS.
+  </p>
+
+  <!-- ─── Techniques applied ─────────────────────────── -->
+  <h2>Optimization Techniques Applied</h2>
+  <p>Nine cost levers were stacked to collapse the budget from $2,685 to $240 — each one independently
+    justified and empirically validated:</p>
+
+  <div class="techniques">
+    <div class="technique">
+      <div>
+        <div class="technique-name">Model right-sizing</div>
+        <div class="technique-desc">Switched from GPT-4 Turbo to Claude 3.5 Sonnet — 60% cheaper per token with equivalent domain accuracy.</div>
+      </div>
+      <div class="technique-saving">−60%</div>
+    </div>
+    <div class="technique">
+      <div>
+        <div class="technique-name">Context window pruning</div>
+        <div class="technique-desc">Reduced top_k from 10 to 3–5 chunks via reranker, cutting input tokens by 40–60% without quality loss.</div>
+      </div>
+      <div class="technique-saving">−50% tokens</div>
+    </div>
+    <div class="technique">
+      <div>
+        <div class="technique-name">Graph-first retrieval</div>
+        <div class="technique-desc">Structured graph queries resolve factual lookups (version, rule, parameter) without hitting the LLM at all.</div>
+      </div>
+      <div class="technique-saving">0 tokens</div>
+    </div>
+    <div class="technique">
+      <div>
+        <div class="technique-name">QLoRA fine-tuning (4-bit)</div>
+        <div class="technique-desc">Fine-tuned Mistral-7B on synthetic EDA Q&amp;A. 4-bit quantization cut GPU memory from 28 GB to 6 GB, enabling single-GPU training.</div>
+      </div>
+      <div class="technique-saving">−78% VRAM</div>
+    </div>
+    <div class="technique">
+      <div>
+        <div class="technique-name">Free-tier infrastructure</div>
+        <div class="technique-desc">Neo4j Aura Free, ChromaDB on-disk, GitHub Pages hosting — eliminated $85/month in managed service fees.</div>
+      </div>
+      <div class="technique-saving">−$85/mo</div>
+    </div>
+    <div class="technique">
+      <div>
+        <div class="technique-name">Local embeddings</div>
+        <div class="technique-desc">all-MiniLM-L6-v2 runs on-device — zero API calls for embedding 847 chunks during indexing and retrieval.</div>
+      </div>
+      <div class="technique-saving">$0 embed</div>
+    </div>
+    <div class="technique">
+      <div>
+        <div class="technique-name">Streaming responses (SSE)</div>
+        <div class="technique-desc">Server-Sent Events deliver tokens as they arrive. No retry loops, no wasted compute on timeouts.</div>
+      </div>
+      <div class="technique-saving">−latency</div>
+    </div>
+    <div class="technique">
+      <div>
+        <div class="technique-name">Rate limiting &amp; query caps</div>
+        <div class="technique-desc">10 requests/min per IP, 500-char query limit. Prevents abuse from inflating API costs.</div>
+      </div>
+      <div class="technique-saving">abuse guard</div>
+    </div>
+    <div class="technique">
+      <div>
+        <div class="technique-name">Single-VPS deployment</div>
+        <div class="technique-desc">API, reranker, and vector store co-located on one $12/month VPS — no load balancer, no container orchestration.</div>
+      </div>
+      <div class="technique-saving">$12/mo</div>
+    </div>
+  </div>
+
+  <!-- ─── CTA ────────────────────────────────────────── -->
+  <div class="cta-card">
+    <h3>Read the full analysis</h3>
+    <p>The complete cost optimization paper covers methodology, per-technique breakdowns,
+      quality benchmarks (EDABench: 72.2% accuracy), and scaling projections.</p>
+    <div class="cta-links">
+      <a href="https://oguzhan-canada.github.io/eda-copilot/cost-optimization.html" target="_blank">Cost optimization paper →</a>
+      <a class="secondary" href="https://oguzhan-canada.github.io/eda-copilot/" target="_blank">Live demo &amp; dashboard</a>
+      <a class="secondary" href="https://github.com/oguzhan-canada/eda-copilot" target="_blank">GitHub repo</a>
+    </div>
+  </div>
+
+  <footer>
+    <p>AI Inference Cost Optimizer — oguzhan-canada</p>
+    <div>
+      <a href="index.html">optimizer</a>
+      <a href="https://github.com/oguzhan-canada/ai-inference-cost-optimizer">source</a>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>
