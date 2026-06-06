@@ -764,6 +764,17 @@
     color: var(--accent);
     border-bottom-color: var(--accent);
   }
+  a.tab-link {
+    text-decoration: none;
+    margin-left: auto;
+    color: var(--accent-soft);
+    border-bottom-color: var(--accent-soft);
+  }
+  a.tab-link:hover {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    background: var(--surface-1);
+  }
   .tab-panel {
     display: none;
   }
@@ -901,6 +912,7 @@
     <button class="tab-btn" data-tab="methodology">Methodology</button>
     <button class="tab-btn" data-tab="cost-opt">Cost Optimization</button>
     <button class="tab-btn" data-tab="about">About</button>
+    <a class="tab-btn tab-link" href="case-study.html">Case Study ↗</a>
   </nav>
 
   <div class="tab-panel active" id="tab-tool">
