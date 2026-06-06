@@ -148,3 +148,11 @@ React/Next is overkill for a tool that doesn't need routing, server state, or au
 - **Mistral price dominance is real.** Mistral's published per-token rates are significantly lower than competitors at equivalent tiers. The engine reflects this accurately — it is not a bug but a legitimate pricing advantage that may or may not persist.
 
 See `validation-set.md` for the scenarios this prototype was tested against, and `ruleset.md` for the precise rule semantics.
+
+---
+
+## Case Study
+
+The **[EDA Copilot](https://github.com/oguzhan-canada/eda-copilot)** project demonstrates these cost optimization principles in practice. A production GraphRAG system was built for **$240** against an original **$2,685** budget (91% cost reduction), operating at **~$0.01 per query**. Techniques included free-tier arbitrage, Anthropic Batch API (50% savings), tiered processing, and QLoRA fine-tuning on budget GPU instances.
+
+📄 [Cost Optimization Paper](https://oguzhan-canada.github.io/eda-copilot/cost-optimization.html) · 🌐 [Live Dashboard](https://oguzhan-canada.github.io/eda-copilot/)
