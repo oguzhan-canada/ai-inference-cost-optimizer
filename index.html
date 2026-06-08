@@ -166,7 +166,8 @@
     font-weight: 500;
   }
   .field select,
-  .field input[type=number] {
+  .field input[type=number],
+  .field input[type=text] {
     width: 100%;
     background: var(--bg);
     border: 1px solid var(--border);
@@ -885,6 +886,24 @@
   .levers { animation-delay: 0.06s; }
   .trace { animation-delay: 0.12s; }
   section.alts { animation-delay: 0.18s; }
+
+  /* ─── Routing Impact tab ─────────────────────────── */
+  .routing-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-top: 24px; align-items: start; }
+  .routing-col { min-width: 0; padding: 0 30px; }
+  .routing-col:first-child { padding-left: 0; }
+  .routing-col:last-child { padding-right: 0; border-left: 1px solid var(--border-strong); }
+  @media (max-width: 900px) { .routing-pair { grid-template-columns: 1fr; } .routing-col { padding: 0; } .routing-col:last-child { border-left: none; border-top: 1px solid var(--border-strong); padding-top: 28px; margin-top: 28px; } }
+  .routing-note { color: var(--text); font-size: 13px; line-height: 1.6; margin-top: 4px; font-family: var(--sans); padding-left: 2px; }
+  .routing-note strong { color: var(--text); }
+  .field .unit { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; color: var(--text-muted); text-transform: uppercase; margin-top: 6px; }
+  .r-blk-head { min-height: 21px; }
+  .routing-section-h { font-family: var(--serif); font-size: 18px; font-weight: 600; color: var(--text); margin: 40px 0 16px; padding-top: 24px; border-top: 1px solid var(--border-strong); }
+  .routing-section-h.first { border-top: none; padding-top: 0; margin-top: 28px; }
+  .routing-section-h .sub { display: block; font-family: var(--sans); font-size: 13px; font-weight: 400; color: var(--text-muted); margin-top: 5px; letter-spacing: 0; }
+  .gw-config { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
+  @media (max-width: 720px) { .gw-config { grid-template-columns: 1fr; } }
+  .summary-table td.netcol, .summary-table th.netcol { text-align: right; font-family: var(--mono); color: var(--text); }
+  .summary-table tr.is-low td { color: var(--accent); }
 </style>
 </head>
 <body>
@@ -909,6 +928,7 @@
 
   <nav class="tab-nav">
     <button class="tab-btn active" data-tab="tool">Cost Advisor</button>
+    <button class="tab-btn" data-tab="routing">Routing Impact</button>
     <button class="tab-btn" data-tab="methodology">Methodology</button>
     <button class="tab-btn" data-tab="cost-opt">Cost Optimization</button>
     <button class="tab-btn" data-tab="about">About</button>
@@ -1076,6 +1096,261 @@
       </div>
     </div>
   </main>
+  </div>
+
+  <div class="tab-panel" id="tab-routing">
+    <header style="margin-bottom:22px">
+      <h1 style="font-family:var(--serif);font-size:clamp(22px,3vw,30px);letter-spacing:-0.01em;margin:0 0 8px">Routing Impact — native hyperscaler routing</h1>
+      <p class="field-hint" style="font-size:14px">Model routing is software that automatically sends each request to the cheapest model that can handle it well, instead of paying premium prices for every call. Below: the <em>same</em> workload, routed by each cloud's own native router, against that cloud's frontier model — list price, no other levers.</p>
+    </header>
+
+    <div class="verdict">
+      <div class="verdict-label">Shared workload · drives both cards</div>
+      <div style="display:flex;flex-wrap:wrap;gap:22px 44px;margin-top:16px;align-items:flex-start">
+        <div style="flex:0 0 420px;min-width:0">
+        <div class="routing-note r-blk-head" style="margin:0 0 9px;padding-left:0"><span class="num" style="color:var(--accent);font-family:var(--mono);font-weight:500;margin-right:6px">01</span>Monthly volume — input &amp; output</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="field" style="margin:0">
+            <label for="r-vol-in">Input</label>
+            <input type="number" id="r-vol-in" value="100" min="0.1" step="1" />
+            <div class="unit">Million tokens</div>
+          </div>
+          <div class="field" style="margin:0">
+            <label for="r-vol-out">Output</label>
+            <input type="number" id="r-vol-out" value="20" min="0.1" step="1" />
+            <div class="unit">Million tokens</div>
+          </div>
+        </div>
+      </div>
+      <div style="flex:0 0 440px;min-width:0">
+        <div class="routing-note r-blk-head" style="margin:0 0 9px;padding-left:0"><span class="num" style="color:var(--accent);font-family:var(--mono);font-weight:500;margin-right:6px">02</span>Difficulty mix — pick easy &amp; intermediate; difficult auto-fills</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+          <div class="field" style="margin:0">
+            <label for="r-mix-easy">Easy</label>
+            <select id="r-mix-easy" aria-label="Easy share percent"></select>
+          </div>
+          <div class="field" style="margin:0">
+            <label for="r-mix-int">Intermediate</label>
+            <select id="r-mix-int" aria-label="Intermediate share percent"></select>
+          </div>
+          <div class="field" style="margin:0">
+            <label for="r-mix-diff">Difficult (auto)</label>
+            <input type="text" id="r-mix-diff" value="34%" readonly tabindex="-1" aria-label="Difficult share percent (auto-filled)" style="text-align:center;opacity:0.9;cursor:default" />
+          </div>
+        </div>
+        <div id="r-mix-sum" class="routing-note" style="margin-top:9px;font-family:var(--mono)">= 100%</div>
+      </div>
+      <div style="flex:0 0 220px;min-width:0">
+        <div class="routing-note r-blk-head" style="margin:0 0 9px;padding-left:0"><span class="num" style="color:var(--accent);font-family:var(--mono);font-weight:500;margin-right:6px">03</span>Request size</div>
+        <div class="field" style="margin:0">
+          <label for="r-tokens-req">Tokens / request</label>
+          <input type="number" id="r-tokens-req" value="1000" min="1" step="100" />
+          <div class="unit">drives AWS &amp; recommender fees</div>
+        </div>
+      </div>
+    </div>
+    </div>
+
+    <section class="routing-section">
+    <h2 class="routing-section-h first">Native — in-cloud routing<span class="sub">Each cloud's own router, in its own billing boundary, against its own frontier model. The same workload priced by each cloud's native router — figures are specific to each cloud and are <strong>not comparable across clouds</strong>.</span></h2>
+    <div class="routing-pair">
+    <div class="routing-col" id="r-card-aws">
+      <div class="verdict">
+        <div class="verdict-label">AWS Bedrock · Intelligent Prompt Routing · in-family (Claude)</div>
+        <p class="verdict-because" id="r-aws-headline" style="font-size:19px;color:var(--text);margin-top:10px">—</p>
+        <div class="cost-grid" style="margin-top:22px">
+          <div class="cost-cell baseline">
+            <div class="lbl">Frontier baseline</div>
+            <div class="val" id="r-aws-baseline">—</div>
+            <div class="sub" id="r-aws-baseline-sub">—</div>
+          </div>
+          <div class="cost-cell recommended">
+            <div class="lbl">Routed inference</div>
+            <div class="val" id="r-aws-routed">—</div>
+            <div class="sub">3-tier split · pre-fee</div>
+          </div>
+          <div class="cost-cell recommended">
+            <div class="lbl">Net incl. routing fee</div>
+            <div class="val" id="r-aws-net">—</div>
+            <div class="sub" id="r-aws-net-sub">—</div>
+          </div>
+        </div>
+        <div id="r-aws-sav" style="margin-top:18px;font-family:var(--mono);font-size:15px;color:var(--accent)">—</div>
+      </div>
+      <section class="alts" style="margin-top:20px">
+        <h2>Per-tier breakdown</h2>
+        <table class="alts-table">
+          <thead><tr><th>Tier</th><th>Model</th><th>Share</th><th>$/M in</th><th>$/M out</th><th>Monthly</th></tr></thead>
+          <tbody id="r-aws-tier-body"></tbody>
+        </table>
+      </section>
+      <div class="routing-note" id="r-aws-fee-line" style="margin-top:16px"></div>
+      <div class="routing-note" id="r-aws-claim" style="margin-top:6px"></div>
+      <div class="routing-note" id="r-aws-caveats" style="margin-top:6px"></div>
+    </div>
+
+    <div class="routing-col" id="r-card-azure">
+      <div class="verdict">
+        <div class="verdict-label">Azure AI Foundry · Model Router · cross-family (within Azure)</div>
+        <p class="verdict-because" id="r-azure-headline" style="font-size:19px;color:var(--text);margin-top:10px">—</p>
+        <div class="cost-grid" style="margin-top:22px">
+          <div class="cost-cell baseline">
+            <div class="lbl">Frontier baseline</div>
+            <div class="val" id="r-azure-baseline">—</div>
+            <div class="sub" id="r-azure-baseline-sub">—</div>
+          </div>
+          <div class="cost-cell recommended">
+            <div class="lbl">Routed inference</div>
+            <div class="val" id="r-azure-routed">—</div>
+            <div class="sub">3-tier split · pre-fee</div>
+          </div>
+          <div class="cost-cell recommended">
+            <div class="lbl">Net incl. router fee</div>
+            <div class="val" id="r-azure-net">—</div>
+            <div class="sub" id="r-azure-net-sub">—</div>
+          </div>
+        </div>
+        <div id="r-azure-sav" style="margin-top:18px;font-family:var(--mono);font-size:15px;color:var(--accent)">—</div>
+      </div>
+      <section class="alts" style="margin-top:20px">
+        <h2>Per-tier breakdown</h2>
+        <table class="alts-table">
+          <thead><tr><th>Tier</th><th>Model</th><th>Share</th><th>$/M in</th><th>$/M out</th><th>Monthly</th></tr></thead>
+          <tbody id="r-azure-tier-body"></tbody>
+        </table>
+      </section>
+      <div class="routing-note" id="r-azure-fee-line" style="margin-top:16px"></div>
+      <div class="routing-note" id="r-azure-claim" style="margin-top:6px"></div>
+      <div class="routing-note" id="r-azure-caveats" style="margin-top:6px"></div>
+    </div>
+
+    </div>
+    <div class="routing-note" style="margin-top:18px">
+      <strong>Google deferred.</strong> Vertex AI Model Optimizer (preview) is a managed, Gemini-scoped router — not DIY — but is deferred here pending a verified Gemini Flash/Pro price snapshot.
+    </div>
+    </section>
+
+    <section class="routing-section">
+    <h2 class="routing-section-h">Cross-provider gateway — route across vendors<span class="sub">One configurable gateway across vendors.</span></h2>
+    <p class="field-hint" style="margin-top:0;margin-bottom:18px;color:var(--text)">
+      A gateway is one doorway in front of many models from different vendors. It reads each
+      incoming request, decides on its own <em>how hard the task is</em> — easy, intermediate,
+      or difficult — and sends it to the model you've assigned to that level. You set that menu
+      in the dropdowns below; the gateway does the sorting. <strong>It routes to the model you
+      picked for each tier, not automatically to the cheapest one</strong> — because only you can
+      judge which inexpensive model is still good enough for your work. The payoff a single cloud
+      can't match: you can put a very cheap model on the easy path and reserve a premium one for
+      the hard path, mixing providers freely.
+    </p>
+    <div class="verdict" style="margin-bottom:18px">
+      <div class="verdict-label">Gateway configuration · route each tier to any provider's model</div>
+      <div class="gw-config">
+        <div class="field" style="margin:0"><label for="r-gw-easy">Easy tier → model</label><select id="r-gw-easy"></select></div>
+        <div class="field" style="margin:0"><label for="r-gw-int">Intermediate → model</label><select id="r-gw-int"></select></div>
+        <div class="field" style="margin:0"><label for="r-gw-diff">Difficult / baseline → model</label><select id="r-gw-diff"></select></div>
+      </div>
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-top:12px">
+        <div class="field" style="margin:0"><label for="r-gw-fee">Fee model</label>
+          <select id="r-gw-fee">
+            <option value="pct">Markup % on routed spend (OpenRouter / Eden ≈5.5%)</option>
+            <option value="none">Zero markup · BYOK (Vercel / Cloudflare / Helicone)</option>
+            <option value="subscription">Flat subscription $/mo (Portkey / TrueFoundry)</option>
+            <option value="self_host">Self-host (infra $/mo + ops not priced)</option>
+          </select>
+        </div>
+        <div class="field" style="margin:0" id="r-gw-fee-amt-field"><label for="r-gw-fee-amt">Fee amount</label>
+          <input type="number" id="r-gw-fee-amt" value="5.5" min="0" step="0.5" /><div class="unit" id="r-gw-fee-amt-unit">% of routed spend</div>
+        </div>
+      </div>
+    </div>
+    <div id="r-card-gw">
+      <div class="verdict">
+        <div class="verdict-label">Cross-provider gateway · route across vendors</div>
+        <p class="verdict-because" id="r-gw-headline" style="font-size:19px;color:var(--text);margin-top:10px">—</p>
+        <div class="cost-grid" style="margin-top:22px">
+          <div class="cost-cell baseline">
+            <div class="lbl">Frontier baseline</div>
+            <div class="val" id="r-gw-baseline">—</div>
+            <div class="sub" id="r-gw-baseline-sub">—</div>
+          </div>
+          <div class="cost-cell recommended">
+            <div class="lbl">Routed inference</div>
+            <div class="val" id="r-gw-routed">—</div>
+            <div class="sub">3-tier split · pre-fee</div>
+          </div>
+          <div class="cost-cell recommended">
+            <div class="lbl">Net incl. gateway fee</div>
+            <div class="val" id="r-gw-net">—</div>
+            <div class="sub" id="r-gw-net-sub">—</div>
+          </div>
+        </div>
+        <div id="r-gw-sav" style="margin-top:18px;font-family:var(--mono);font-size:15px;color:var(--accent)">—</div>
+      </div>
+      <section class="alts" style="margin-top:20px">
+        <h2>Per-tier breakdown</h2>
+        <table class="alts-table">
+          <thead><tr><th>Tier</th><th>Model</th><th>Share</th><th>$/M in</th><th>$/M out</th><th>Monthly</th></tr></thead>
+          <tbody id="r-gw-tier-body"></tbody>
+        </table>
+      </section>
+      <div class="routing-note" id="r-gw-fee-line" style="margin-top:16px"></div>
+      <div class="routing-note" id="r-gw-claim" style="margin-top:6px"></div>
+      <div class="routing-note" id="r-gw-caveats" style="margin-top:6px"></div>
+    </div>
+    </section>
+
+    <section class="routing-section">
+    <h2 class="routing-section-h">Specialist recommender — sits behind the gateway<span class="sub">A learned, per-request model picker that plugs in behind the gateway.</span></h2>
+    <p class="field-hint" style="margin-top:0;margin-bottom:18px;color:var(--text)">
+      A specialist recommender is a service that looks at each <em>individual</em> request and
+      predicts which model will answer it best — a learned judgment trained on past results,
+      rather than the gateway's fixed easy / intermediate / difficult rules. It doesn't replace
+      the gateway; it plugs in <strong>behind</strong> it, making a sharper per-request choice
+      while the gateway still does the actual dispatching. Because it charges a fee for every
+      request it judges, it only earns its keep when those smarter picks save more than the fee
+      costs — and the fair comparison is what the gateway's <strong>own free routing</strong>
+      would have done, not paying full price for everything. That's the bar shown below.
+    </p>
+    <div id="r-card-rec">
+      <div class="verdict">
+        <div class="verdict-label">Specialist recommender · break-even vs the gateway's free routing</div>
+        <p class="verdict-because" id="r-rec-headline" style="font-size:19px;color:var(--text);margin-top:10px">—</p>
+        <div class="cost-grid" style="margin-top:22px">
+          <div class="cost-cell recommended">
+            <div class="lbl">Gateway free routing</div>
+            <div class="val" id="r-rec-free">—</div>
+            <div class="sub">the net to beat</div>
+          </div>
+          <div class="cost-cell recommended">
+            <div class="lbl">Recommender fee</div>
+            <div class="val" id="r-rec-fee">—</div>
+            <div class="sub" id="r-rec-fee-sub">first 10k/mo free</div>
+          </div>
+          <div class="cost-cell recommended">
+            <div class="lbl">Net if it routes no better</div>
+            <div class="val" id="r-rec-parity" style="color:var(--warn)">—</div>
+            <div class="sub">gateway + recommender at parity</div>
+          </div>
+        </div>
+        <div id="r-rec-breakeven" style="margin-top:18px;font-family:var(--mono);font-size:15px;color:var(--text)">—</div>
+      </div>
+      <div class="routing-note" id="r-rec-note" style="margin-top:16px"></div>
+    </div>
+    </section>
+
+    <section class="routing-section">
+    <h2 class="routing-section-h">One workload, every layer<span class="sub">Net $/mo is comparable across rows — same workload. Percentages are each layer against its own baseline and are not comparable to each other.</span></h2>
+    <div class="field-hint" style="margin-top:0;margin-bottom:14px">Net $/mo is the honest cross-layer number. The % column is each layer measured against its <strong>own</strong> baseline (each native vs its own frontier; the gateway vs your difficult-tier pick; the recommender vs the gateway's free routing) and is <strong>not</strong> comparable across rows.</div>
+    <table class="alts-table summary-table">
+      <thead><tr><th>Layer</th><th>Baseline</th><th>Routed</th><th>Fee</th><th class="netcol">Net $/mo</th><th>% off own baseline</th></tr></thead>
+      <tbody id="r-summary-body"></tbody>
+    </table>
+    <div class="routing-note" id="r-summary-payoff" style="margin-top:14px"></div>
+    </section>
+
+    <div class="routing-note" style="margin-top:34px;border-top:1px solid var(--border);padding-top:14px">
+      <strong>Always:</strong> list price only · cost structure, not quality (a misroute means rework — validate on real traffic) · per-cloud baseline, figures not comparable across clouds · AWS in-family ceiling · AWS routing-request count is derived from input volume at ~1,000 input tokens/request · all vendor figures vendor-stated, verified on primary pages on the build date · Azure $0.14 is tracker-derived · <strong>assumes equal tokens-per-request across tiers; harder tasks usually emit more output/reasoning tokens that load the expensive tier, so this likely overstates savings.</strong>
+    </div>
   </div>
 
   <div class="tab-panel" id="tab-methodology">
@@ -1504,7 +1779,7 @@
     </div>
 
     <div class="content-section">
-      <h3>Scope &amp; Model Selection</h3>
+      <h3>Scope &amp; Model Selection — Cost Advisor</h3>
       <p>The dashboard evaluates <strong>16 curated models across 5 providers</strong> (Mistral, OpenAI, Anthropic, Google Gemini, Microsoft Foundry). Why 16? It is a deliberately manageable set that covers the models most likely to matter for practical cost comparison, while keeping the rule framework transparent and auditable. The selection prioritizes breadth across price tiers (simple → standard → complex → frontier) over exhaustive catalog coverage.</p>
       <p>The model catalog includes:</p>
       <ul>
@@ -1516,6 +1791,19 @@
       </ul>
       <p><strong>Cohere</strong> is excluded from v0.1 pending verified 2026 generation pricing. Cohere is better framed as a retrieval/rerank provider — its cost play is architectural (reduce tokens sent to expensive generation models), not per-token.</p>
     </div>
+
+          <div class="content-section">
+            <h3>Scope, Model &amp; Provider Selection — Model Routing</h3>
+            <p>The Routing Impact tab models a different question from the Cost Advisor: not <em>which single model</em> to run, but <em>how much a routing layer cuts the bill</em> when a workload is split across difficulty tiers instead of sent entirely to a frontier model. It reuses the same 16-model catalog read-only and <strong>isolates routing — list price only, with no caching, batching, or effort levers</strong> — so any saving shown is attributable to routing alone, not stacked with other optimizations.</p>
+            <p>It covers three routing layers, plus a consolidated comparison:</p>
+            <ul>
+              <li><strong>Native (in-cloud) routing</strong> — each hyperscaler's own managed router, measured against that cloud's own frontier model. <strong>AWS Bedrock</strong> (Intelligent Prompt Routing: in-family only, $1.00 / 1,000 requests, vendor claim "up to 30%") uses the Claude ladder Haiku 4.5 → Sonnet 4.6 → Opus 4.8; <strong>Azure AI Foundry</strong> (Model Router: cross-family within Azure, ~$0.14 / 1M input tokens, no headline savings figure) uses GPT-5.4 nano → GPT-5.4 → GPT-5.5.</li>
+              <li><strong>Cross-provider gateway</strong> — one configurable gateway that can route each tier to <em>any</em> model in the catalog, across vendors, under four fee models (percentage markup, zero-markup BYOK, flat subscription, or self-host). The per-tier model is a user choice because the cost/quality tradeoff is the user's to make: the gateway classifies how hard each request is, but the human sets which model serves each tier — it does not auto-pick the cheapest.</li>
+              <li><strong>Specialist recommender</strong> — a per-request model picker that sits <em>behind</em> the gateway, modeled as an overlay on the gateway's already-routed bill (a Not Diamond-style fee: ~$10 / 10,000 recommendations, first 10,000 free). Its break-even is measured against the gateway's own free routing, never the do-nothing frontier baseline, to avoid double-counting the gateway's savings.</li>
+            </ul>
+            <p>A closing <strong>"one workload, every layer"</strong> table compares all of the above on a single workload. Net $/mo is the comparable figure; percentages are each layer measured against its own baseline and are not comparable across rows. Two assumptions are surfaced as standing caveats: the difficulty mix applies <strong>equal tokens-per-request across tiers</strong> (harder tasks usually emit more output, so this likely overstates savings), and each cheap tier is assumed <strong>quality-acceptable</strong> for its slice — a judgment the user must validate on real traffic.</p>
+            <p><strong>Google Cloud</strong> is deferred from v0.1 pending a verified Gemini Flash/Pro price snapshot. This is a data gap, not a capability gap: Vertex AI Model Optimizer is a managed, Gemini-scoped router (in preview), not a do-it-yourself approach — it is held back only because its tier models are not yet in the verified catalog.</p>
+          </div>
 
     <div class="content-section">
       <h3>Disclaimer</h3>
@@ -2088,6 +2376,338 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 
 /* ─── Initial render ─────────────────────────────────────────── */
 recompute();
+</script>
+
+<script>
+/* ─── Routing Impact tab — independent of the Cost Advisor engine ─────── */
+(function () {
+  'use strict';
+  if (typeof MODELS === 'undefined') return;
+
+  var $r = function (id) { return document.getElementById(id); };
+  var esc = (typeof escapeHtml === 'function') ? escapeHtml
+            : function (s) { return String(s).replace(/[&<>"']/g, function (c) {
+                return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
+
+  function money(n) {
+    if (n == null || isNaN(n)) return '\u2014';
+    var a = Math.abs(n);
+    if (a >= 1000) return '$' + Math.round(n).toLocaleString('en-US');
+    if (a >= 100)  return '$' + n.toFixed(0);
+    return '$' + n.toFixed(2);
+  }
+  function pctf(n) {
+    if (n == null || isNaN(n)) return '\u2014';
+    var v = n * 100;
+    return (Math.abs(v) >= 10 ? v.toFixed(0) : v.toFixed(1)) + '%';
+  }
+
+  var STRATS = {
+    aws: {
+      cloud: 'AWS',
+      baselineId: 'opus-4.8',
+      ladder: { easy: 'haiku-4.5', intermediate: 'sonnet-4.6', difficult: 'opus-4.8' },
+      fee: { type: 'per_request', usdPer1000: 1.00 },
+      vendorClaimPct: 0.30,
+      caveats: [
+        'In-family ceiling: routes only within the Claude family \u2014 cannot drop to a cheaper non-Anthropic model.',
+        'The difficult tier is the baseline model, so savings come only from the easy + intermediate share.'
+      ]
+    },
+    azure: {
+      cloud: 'Azure',
+      baselineId: 'gpt-5.5',
+      ladder: { easy: 'gpt-5.4-nano', intermediate: 'gpt-5.4', difficult: 'gpt-5.5' },
+      fee: { type: 'per_input_mtok', usdPerMtok: 0.14 },
+      vendorClaimPct: null,
+      vendorClaimNote: 'Azure publishes no headline savings figure for Model Router.',
+      caveats: [
+        'Cross-family, but bounded by Azure\u2019s billing boundary.',
+        'Advertised context window is that of the smallest underlying model.',
+        'The ~$0.14/1M-input router charge is tracker-derived, not itemized on Microsoft\u2019s own pricing page.'
+      ]
+    }
+  };
+
+  var TIER_LABEL = { easy: 'Easy', intermediate: 'Intermediate', difficult: 'Difficult' };
+
+  function price(id) { return MODELS.find(function (m) { return m.id === id; }); }
+  function cost(id, vin, vout) { var m = price(id); return m ? (m.input * vin + m.output * vout) : 0; }
+
+  function compute(S, vin, vout, mix, reqM) {
+    var baseline = cost(S.baselineId, vin, vout);
+    var routed = 0, rows = [];
+    ['easy', 'intermediate', 'difficult'].forEach(function (t) {
+      var id = S.ladder[t], share = mix[t];
+      var c = cost(id, vin * share, vout * share);
+      routed += c;
+      rows.push({ tier: t, model: price(id), share: share, monthly: c });
+    });
+    var fee = 0, feeText = 'No routing fee.';
+    if (S.fee.type === 'per_request') {
+      fee = (reqM || 0) * 1e6 / 1000 * S.fee.usdPer1000;
+      feeText = 'AWS routing fee: \u2248' + (reqM || 0).toFixed(2) + 'M requests (' + vin + 'M input \u00f7 ~1,000 tok/req) \u00d7 $' + S.fee.usdPer1000.toFixed(2) + '/1,000 = ' + money(fee);
+    } else if (S.fee.type === 'per_input_mtok') {
+      fee = S.fee.usdPerMtok * vin;
+      feeText = 'Azure router fee: $' + S.fee.usdPerMtok.toFixed(2) + '/1M input \u00d7 ' + vin + 'M = ' + money(fee);
+    } else if (S.fee.type === 'pct_surcharge') {
+      fee = S.fee.pct * routed;
+      feeText = 'Gateway markup: ' + (S.fee.pct * 100).toFixed(1) + '% \u00d7 routed ' + money(routed) + ' = ' + money(fee);
+    } else if (S.fee.type === 'subscription') {
+      fee = S.fee.usdPerMonth;
+      feeText = 'Platform subscription: ' + money(fee) + '/mo (flat \u2014 negligible at scale, dominant at low volume).';
+    } else if (S.fee.type === 'self_host') {
+      fee = S.fee.infraUsd;
+      feeText = 'Self-host infra: \u2248' + money(fee) + '/mo \u2014 PLUS engineering + on-call, which this tool does NOT price.';
+    } else if (S.fee.type === 'none') {
+      fee = 0;
+      feeText = 'Zero markup (BYOK) \u2014 inference billed at provider list rates.';
+    }
+    var net = routed + fee;
+    return {
+      baseline: baseline, routed: routed, fee: fee, feeText: feeText, net: net,
+      grossSav: baseline - routed, grossPct: baseline > 0 ? (baseline - routed) / baseline : 0,
+      netSav: baseline - net, netPct: baseline > 0 ? (baseline - net) / baseline : 0,
+      rows: rows
+    };
+  }
+
+  function renderCard(key, S, r) {
+    var p = 'r-' + key + '-';
+    var baseM = price(S.baselineId);
+
+    var leadSave = S.leadSave || ('On ' + S.cloud + ', routing this workload natively');
+    var leadCost = S.leadCost || ('On ' + S.cloud + ', routing this workload');
+    if (r.netSav >= 0) {
+      $r(p + 'headline').innerHTML = leadSave + ' saves <strong>~' +
+        pctf(r.netPct) + ' (~' + money(r.netSav) + '/mo)</strong> vs running everything on ' + esc(baseM.name) + '.';
+    } else {
+      $r(p + 'headline').innerHTML = leadCost + ' <strong style="color:var(--warn)">costs ~' +
+        money(Math.abs(r.netSav)) + '/mo more</strong> than running everything on ' + esc(baseM.name) +
+        ' \u2014 the fee and difficult-tier share outweigh the savings at this mix.';
+    }
+
+    $r(p + 'baseline').textContent = money(r.baseline);
+    $r(p + 'baseline-sub').textContent = 'all ' + baseM.name + ' \u00b7 list price';
+    $r(p + 'routed').textContent = money(r.routed);
+    $r(p + 'net').textContent = money(r.net);
+    $r(p + 'net-sub').textContent = r.netSav >= 0 ? pctf(r.netPct) + ' off baseline' : '+' + money(Math.abs(r.netSav)) + ' vs baseline';
+
+    var savEl = $r(p + 'sav');
+    if (r.netSav >= 0) {
+      savEl.style.color = 'var(--accent)';
+      savEl.textContent = 'Saves ' + money(r.netSav) + '/mo \u00b7 ' + pctf(r.netPct) +
+        ' net (gross ' + pctf(r.grossPct) + ' before the ' + money(r.fee) + ' fee).';
+    } else {
+      savEl.style.color = 'var(--warn)';
+      savEl.textContent = 'Routing does not pay at this mix: ' + money(Math.abs(r.netSav)) + '/mo more than the baseline.';
+    }
+
+    $r(p + 'tier-body').innerHTML = r.rows.map(function (row) {
+      return '<tr><td>' + TIER_LABEL[row.tier] + '</td>' +
+        '<td>' + esc(row.model.name) + '</td>' +
+        '<td>' + pctf(row.share) + '</td>' +
+        '<td>$' + row.model.input.toFixed(2) + '</td>' +
+        '<td>$' + row.model.output.toFixed(2) + '</td>' +
+        '<td>' + money(row.monthly) + '</td></tr>';
+    }).join('');
+
+    $r(p + 'fee-line').innerHTML = '<strong>Fee:</strong> ' + esc(r.feeText);
+    var claimEl = $r(p + 'claim');
+    claimEl.style.display = '';
+    if (S.vendorClaimPct != null) {
+      claimEl.innerHTML = '<strong>Vendor claim:</strong> ' + S.cloud + ' publishes \u201cup to ' + pctf(S.vendorClaimPct) + '\u201d savings.';
+    } else {
+      claimEl.innerHTML = '<strong>Vendor claim:</strong> ' + esc(S.vendorClaimNote);
+    }
+    $r(p + 'caveats').innerHTML = '<strong>Caveats:</strong> ' + S.caveats.map(esc).join(' \u00b7 ');
+  }
+
+  function readMix() {
+    var e = parseInt($r('r-mix-easy').value, 10) || 0;
+    var i = parseInt($r('r-mix-int').value, 10) || 0;
+    if (e + i > 100) i = 100 - e;
+    var d = 100 - e - i;
+    var diffEl = $r('r-mix-diff'); if (diffEl) diffEl.value = d + '%';
+    var sumEl = $r('r-mix-sum');
+    if (sumEl) { sumEl.innerHTML = '= ' + e + '% easy \u00b7 ' + i + '% intermediate \u00b7 ' + d + '% difficult'; sumEl.style.color = 'var(--text)'; }
+    return { easy: e / 100, intermediate: i / 100, difficult: d / 100 };
+  }
+
+  function recompute() {
+    var vin = parseFloat($r('r-vol-in').value) || 0;
+    var vout = parseFloat($r('r-vol-out').value) || 0;
+    var tpr = parseFloat($r('r-tokens-req').value) || 1000;
+    var reqM = vin / tpr; // routing requests (millions) = input MTok / avg input tokens-per-request
+    var mix = readMix();
+    var aws = compute(STRATS.aws, vin, vout, mix, reqM);
+    var azure = compute(STRATS.azure, vin, vout, mix, 0);
+    renderCard('aws', STRATS.aws, aws);
+    renderCard('azure', STRATS.azure, azure);
+    var gwS = gatewayStrategy();
+    var gw = compute(gwS, vin, vout, mix, reqM);
+    renderCard('gw', gwS, gw);
+    var rec = computeRecommender(gw, reqM);
+    renderRecommender(rec);
+    renderSummary({ aws: aws, azure: azure, gw: gw, rec: rec });
+    equalizeCards();
+  }
+  function equalizeCards() {
+    var groups = [
+      ['#r-card-aws .verdict', '#r-card-azure .verdict'],
+      ['#r-card-aws section.alts', '#r-card-azure section.alts'],
+      ['#r-aws-fee-line', '#r-azure-fee-line'],
+      ['#r-aws-claim', '#r-azure-claim'],
+      ['#r-aws-caveats', '#r-azure-caveats']
+    ];
+    var narrow = window.innerWidth < 900;
+    groups.forEach(function (g) {
+      var a = document.querySelector(g[0]), z = document.querySelector(g[1]);
+      if (!a || !z) return;
+      a.style.minHeight = ''; z.style.minHeight = '';
+      if (narrow) return;
+      var ha = a.offsetHeight, hz = z.offsetHeight;
+      if (!ha || !hz) return;
+      a.style.minHeight = z.style.minHeight = Math.max(ha, hz) + 'px';
+    });
+  }
+
+  function modelOpt(sel) {
+    return MODELS.slice().sort(function (a, b) { return (a.input + a.output) - (b.input + b.output); })
+      .map(function (m) {
+        return '<option value="' + m.id + '"' + (m.id === sel ? ' selected' : '') + '>' +
+          esc(m.name) + ' \u00b7 $' + m.input.toFixed(2) + '/' + m.output.toFixed(2) + '</option>';
+      }).join('');
+  }
+
+  function gatewayStrategy() {
+    var feeType = $r('r-gw-fee').value, amt = parseFloat($r('r-gw-fee-amt').value) || 0;
+    var fee = feeType === 'pct' ? { type: 'pct_surcharge', pct: amt / 100 }
+            : feeType === 'subscription' ? { type: 'subscription', usdPerMonth: amt }
+            : feeType === 'self_host' ? { type: 'self_host', infraUsd: amt }
+            : { type: 'none' };
+    var diff = $r('r-gw-diff').value;
+    return {
+      cloud: 'Cross-provider gateway',
+      leadSave: 'Across a cross-provider gateway, routing this workload',
+      leadCost: 'Across a cross-provider gateway, routing this workload',
+      baselineId: diff,
+      ladder: { easy: $r('r-gw-easy').value, intermediate: $r('r-gw-int').value, difficult: diff },
+      fee: fee,
+      vendorClaimPct: null,
+      vendorClaimNote: 'Gateways publish no model-routing savings figure \u2014 the saving is yours to configure, and the fee is small relative to it.',
+      caveats: [
+        'Cross-provider: the cheap tier can be a genuinely cheaper model than any single cloud offers \u2014 but it is a DIFFERENT quality tier; you chose it, so validate it.',
+        'Trades single-cloud governance and single-bill procurement for model-menu freedom.',
+        'Markup applies to ROUTED (reduced) spend, not the baseline.'
+      ]
+    };
+  }
+
+  function computeRecommender(gw, reqM) {
+    var reqs = (reqM || 0) * 1e6;
+    var billable = Math.max(0, reqs - 1e4);
+    var recFee = (billable / 1e4) * 10;
+    var breakevenCutPct = gw.routed > 0 ? recFee / gw.routed : 0;
+    return { recFee: recFee, gatewayFreeNet: gw.net, withRecAtParity: gw.net + recFee, breakevenCutPct: breakevenCutPct, reqs: reqs };
+  }
+
+  function renderRecommender(rec) {
+    $r('r-rec-free').textContent = money(rec.gatewayFreeNet);
+    $r('r-rec-fee').textContent = money(rec.recFee);
+    $r('r-rec-parity').textContent = money(rec.withRecAtParity);
+    $r('r-rec-fee-sub').textContent = rec.reqs > 1e4
+      ? Math.round((rec.reqs - 1e4) / 1e3) + 'k billable \u00b7 first 10k free'
+      : 'within free 10k/mo';
+    $r('r-rec-headline').innerHTML = 'A recommender adds <strong>~' + money(rec.recFee) +
+      '/mo</strong> on top of the gateway. It only pays if it routes better than the gateway\u2019s own free rules by <strong>more than ' +
+      money(rec.recFee) + '</strong> \u2014 i.e. cuts the already-routed bill by a further <strong>~' + pctf(rec.breakevenCutPct) +
+      '</strong>. Below that, it costs you money.';
+    $r('r-rec-breakeven').textContent = 'Break-even: the recommender must cut the gateway\u2019s routed bill by \u2248' + pctf(rec.breakevenCutPct) + ' just to cover its own fee.';
+    $r('r-rec-note').innerHTML = '<strong>Why there is no savings grid:</strong> a recommender is not measured against the frontier baseline \u2014 that would double-count the gateway\u2019s savings. The only honest question is whether it beats the gateway\u2019s free routing by more than its fee.';
+  }
+
+  function renderSummary(d) {
+    var aws = d.aws, az = d.azure, gw = d.gw, rec = d.rec;
+    var low = Math.min(aws.net, az.net, gw.net);
+    function row(label, baseTxt, routed, feeTxt, net, pctTxt, isLow) {
+      return '<tr' + (isLow ? ' class="is-low"' : '') + '><td>' + esc(label) + '</td>' +
+        '<td>' + baseTxt + '</td><td>' + money(routed) + '</td><td>' + feeTxt + '</td>' +
+        '<td class="netcol">' + money(net) + '</td><td>' + pctTxt + '</td></tr>';
+    }
+    var html = '';
+    html += row('AWS native (in-family)', money(aws.baseline), aws.routed, money(aws.fee), aws.net, pctf(aws.netPct), aws.net === low);
+    html += row('Azure native', money(az.baseline), az.routed, money(az.fee), az.net, pctf(az.netPct), az.net === low);
+    html += row('Cross-provider gateway', money(gw.baseline), gw.routed, money(gw.fee), gw.net, pctf(gw.netPct), gw.net === low);
+    html += row('Gateway + recommender', 'gateway-free', gw.routed, '+' + money(rec.recFee), rec.withRecAtParity, 'needs &gt;' + pctf(rec.breakevenCutPct) + ' better', false);
+    $r('r-summary-body').innerHTML = html;
+    $r('r-summary-payoff').innerHTML = gw.net < aws.net
+      ? '<strong>The payoff:</strong> with these picks the gateway\u2019s cross-provider easy tier lands below AWS\u2019s in-family floor, so <strong>native in-family routing costs more than a cross-provider gateway</strong> (' + money(aws.net) + ' vs ' + money(gw.net) + ' net/mo on the same workload) \u2014 the cross-provider menu is the lever native routing can\u2019t pull.'
+      : '<strong>At these picks</strong> native AWS routing (' + money(aws.net) + ') still beats the configured gateway (' + money(gw.net) + ') \u2014 drop the gateway\u2019s easy/intermediate tiers (e.g. Phi-4 mini) to push the cross-provider floor below the in-family one.';
+  }
+
+  function optTags(max, sel) {
+    var s = '';
+    for (var v = 0; v <= max; v++) s += '<option value="' + v + '"' + (v === sel ? ' selected' : '') + '>' + v + '%</option>';
+    return s;
+  }
+  function buildIntOptions() {
+    var easy = parseInt($r('r-mix-easy').value, 10) || 0;
+    var cur = parseInt($r('r-mix-int').value, 10) || 0;
+    if (cur > 100 - easy) cur = 100 - easy;
+    $r('r-mix-int').innerHTML = optTags(100 - easy, cur);
+  }
+  $r('r-mix-easy').innerHTML = optTags(100, 33);
+  $r('r-mix-int').innerHTML = optTags(67, 33);
+  $r('r-mix-easy').addEventListener('change', function () { buildIntOptions(); recompute(); });
+  $r('r-mix-int').addEventListener('change', recompute);
+
+  ['r-vol-in', 'r-vol-out'].forEach(function (id) {
+    var el = $r(id);
+    if (el) { el.addEventListener('input', recompute); el.addEventListener('change', recompute); }
+  });
+
+  $r('r-gw-easy').innerHTML = modelOpt('ministral-3b');
+  $r('r-gw-int').innerHTML = modelOpt('gpt-5.4');
+  $r('r-gw-diff').innerHTML = modelOpt('opus-4.8');
+  var GW_FEE_DEFAULTS = { pct: 5.5, subscription: 49, self_host: 400 };
+  var GW_FEE_STEP = { pct: 0.5, subscription: 1, self_host: 10 };
+  var lastFeeType = null;
+  function syncGwFeeUI() {
+    var t = $r('r-gw-fee').value, field = $r('r-gw-fee-amt-field'), unit = $r('r-gw-fee-amt-unit'), amt = $r('r-gw-fee-amt');
+    if (lastFeeType !== null && t !== lastFeeType && GW_FEE_DEFAULTS.hasOwnProperty(t)) {
+      amt.value = GW_FEE_DEFAULTS[t];
+      amt.step = GW_FEE_STEP[t];
+    }
+    lastFeeType = t;
+    if (t === 'none') { field.style.display = 'none'; return; }
+    field.style.display = '';
+    unit.textContent = (t === 'pct') ? '% of routed spend' : '$ / month';
+  }
+  ['r-gw-easy', 'r-gw-int', 'r-gw-diff', 'r-gw-fee-amt', 'r-tokens-req'].forEach(function (id) {
+    var el = $r(id);
+    if (el) { el.addEventListener('change', recompute); el.addEventListener('input', recompute); }
+  });
+  $r('r-gw-fee').addEventListener('change', function () { syncGwFeeUI(); recompute(); });
+  syncGwFeeUI();
+
+  window.addEventListener('resize', equalizeCards);
+  var routingBtn = document.querySelector('.tab-btn[data-tab="routing"]');
+  if (routingBtn) routingBtn.addEventListener('click', function () { setTimeout(equalizeCards, 0); });
+
+  try {
+    var third = { easy: 1/3, intermediate: 1/3, difficult: 1/3 };
+    var a = compute(STRATS.aws, 100, 20, third, 0.1), z = compute(STRATS.azure, 100, 20, third, 0);
+    var gwT = { cloud: 'GW', baselineId: 'opus-4.8', ladder: { easy: 'ministral-3b', intermediate: 'gpt-5.4', difficult: 'opus-4.8' }, fee: { type: 'pct_surcharge', pct: 0.055 } };
+    var g = compute(gwT, 100, 20, third, 0.1);
+    var ok = Math.abs(a.routed-600)<0.5 && Math.abs(a.baseline-1000)<0.5 && Math.abs(a.fee-100)<0.5 && Math.abs(a.netSav-300)<0.5
+          && Math.abs(z.routed-565)<0.5 && Math.abs(z.baseline-1100)<0.5 && Math.abs(z.fee-14)<0.5 && Math.abs(z.netSav-521)<0.5
+          && Math.abs(g.baseline-1000)<0.5 && Math.abs(g.routed-520.67)<0.5 && Math.abs(g.fee-28.64)<0.5 && Math.abs(g.net-549.31)<0.5;
+    console.log('[routing self-test] ' + (ok ? 'PASS' : 'FAIL'));
+  } catch (e) { console.log('[routing self-test] ERROR ' + e.message); }
+
+  recompute();
+})();
 </script>
 </body>
 </html>

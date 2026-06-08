@@ -63,6 +63,18 @@ You describe a workload along seven small dimensions — task type, latency, reu
 
 This product complements (and lives upstream of) the larger **AI Inference Cost Optimizer** project: where the Optimizer diagnoses *existing* spend, this prototype helps you *route the next workload* cheaply from the start.
 
+### Routing Impact tab
+
+A second, **independent** calculator (it does not touch the Cost Advisor engine or its validation set). It isolates one question: *how much does model routing cut an inference bill?* — list prices only, no caching/batching/effort levers, so any saving shown is attributable to routing alone. You enter one shared workload — input and output volume (in millions of tokens), an easy/intermediate/difficult mix (you set the easy and intermediate shares from dropdowns; the difficult share auto-fills the remainder, capped at 100%), and an average request size (tokens/request) — and the tab prices that workload across three routing layers, then consolidates them:
+
+- **Native — in-cloud routing** (two cards, side by side): each hyperscaler's own managed router, measured against that cloud's own frontier model.
+  - **AWS Bedrock — Intelligent Prompt Routing**: in-family Claude ladder (Haiku 4.5 → Sonnet 4.6 → Opus 4.8), a per-request fee ($1.00 / 1,000 routing requests — the request count is derived from input volume and the request-size input, so there is no separate requests field), vs an all-Opus baseline. Vendor claim: up to 30%.
+  - **Azure AI Foundry — Model Router**: cross-family within Azure (GPT-5.4 nano → GPT-5.4 → GPT-5.5), a per-input-token router fee (~$0.14 / 1M input, tracker-derived), vs an all-GPT-5.5 baseline. Azure publishes no headline savings figure, so the card states that explicitly.
+- **Cross-provider gateway**: one configurable gateway that can route each tier to *any* model in the 16-model catalog, across vendors, under four fee models (percentage markup on routed spend, zero-markup BYOK, flat subscription, or self-host). You pick the per-tier model because the cost/quality tradeoff is yours to make — the gateway classifies difficulty, it does not auto-pick the cheapest.
+- **Specialist recommender**: a per-request model picker modeled as an overlay *behind* the gateway (a Not Diamond-style fee: ~$10 / 10,000 recommendations, first 10,000 free). Its break-even is measured against the gateway's own free routing — never the do-nothing baseline — to avoid double-counting the gateway's savings.
+
+A closing **"one workload, every layer"** table compares all layers on the single workload: net $/mo is the comparable figure (percentages are each layer against its own baseline and are not comparable across rows), and the lowest-net real option is highlighted. Each card shows baseline → routed inference → net (incl. fee), a per-tier breakdown, and an honest headline that **flips to "costs more"** when a difficult-heavy mix makes routing uneconomic. Two standing caveats are surfaced: the mix assumes **equal tokens-per-request across tiers** (harder tasks usually emit more output, so this likely overstates savings), and each cheap tier is assumed **quality-acceptable** for its slice — validate on real traffic. Figures use list prices only, are per-cloud (not comparable across clouds), and are vendor-stated. Google (Vertex AI Model Optimizer, preview) is deferred pending a verified Gemini Flash/Pro price snapshot.
+
 ---
 
 ## How it works
