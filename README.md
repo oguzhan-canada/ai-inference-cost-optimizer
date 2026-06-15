@@ -1,5 +1,10 @@
 # AI Inference Cost Optimizer — FinOps Decision Assistant
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Live demo](https://img.shields.io/badge/demo-GitHub%20Pages-2ea44f.svg)](https://oguzhan-canada.github.io/ai-inference-cost-optimizer/)
+[![No dependencies](https://img.shields.io/badge/deps-none-blue.svg)](#file-layout)
+[![Tests](https://img.shields.io/badge/tests-11%20advisor%20%2B%2050%20self--host-success.svg)](tests/)
+
 A rule-based cost advisor that recommends the cheapest viable AI inference path for a given workload — and explains why it's cheaper. Not a calculator. A FinOps decision assistant.
 
 🔗 **Live demo:** [oguzhan-canada.github.io/ai-inference-cost-optimizer](https://oguzhan-canada.github.io/ai-inference-cost-optimizer/)
@@ -7,6 +12,20 @@ A rule-based cost advisor that recommends the cheapest viable AI inference path 
 **Status:** v0.1 prototype · self-contained single-page web app · GitHub-Pages-ready.
 **Pricing snapshot:** 2026-05-31 (verified against six provider documentation sets).
 **Positioning:** *Optimize cost without sacrificing enough quality to matter.*
+
+---
+
+## What makes it different
+
+Most open-source AI-cost tools are either **price libraries** (look up $/token) or **runtime gateways** (route live traffic). This one is an **analysis tool** that fuses three decisions those tools leave separate:
+
+1. **Cost Advisor** — which model/provider is cheapest for a workload, and *why* (an auditable lever trace, not just a number).
+2. **Routing Impact** — how much a routing layer actually saves, isolated so the saving is attributable to routing alone.
+3. **Self-host Economics** — the part no other OSS calculator models honestly: self-hosting is **fixed GPU capacity, not a per-token price**, so the honest output is a **break-even**, and it compares **renting vs *buying*** the GPUs (capital amortization, power × PUE, utilization ceiling, tensor-parallel multi-GPU), with an **optional engineer/ops cost** for a true-TCO view.
+
+> **Illustrative example** (not a quote — validate on your own traffic): a Phi-4-mini workload at low output volume is cheapest on the **API** (your own GPU would sit idle); as volume climbs past the break-even, a **rented** spot GPU wins; **owning** the card only wins once you keep it busy, because idle owned hardware is sunk capital. The tab plots all three lines and both break-even points, so you see *where you sit* — not just a single blended rate.
+
+Every price is an **illustrative snapshot** (sourced in `pricing-sources.md` / `hardware-sources.md`), every throughput figure carries a **measured-vs-estimated** provenance tag, and the math ships with a test suite of **11 advisor + 50 self-host assertions**.
 
 ---
 
@@ -79,11 +98,11 @@ A closing **"one workload, every layer"** table compares all layers on the singl
 
 A third, **independent** calculator (it does not touch the Cost Advisor engine, its validation set, or the Routing tab). It answers the one question the advisor's self-host filter leaves open: *self-hosting an open-weight model is not a per-token price — it is fixed GPU capacity, so at what monthly volume does running your own GPUs beat paying the API, and is it cheaper to **rent** or **buy** those GPUs?*
 
-You pick an open-weight model — **Phi-4 mini, Phi-4, Mistral Small 4**, plus five popular community models added for coverage (**Llama 3.1 8B, Qwen2.5 7B, Gemma 2 9B, Qwen2.5 32B, Llama 3.3 70B**) — a GPU (L4, A10G, A100-80GB, or H100-80GB), a **rental basis** (on-demand / spot / neocloud), a utilization ceiling and min-replica (HA) floor, your monthly input/output volume, and an API model to compare against. A **Buy / owned-GPU** group (purchase price, useful life, board power/TDP, electricity, PUE, hosting — all auto-filled from the GPU and editable) drives a third cost line. The tab computes — via the pure, unit-tested `selfHostCost()` (rent) and `ownedHourly()` (buy) engines — the GPUs needed and three monthly costs side by side: **API**, **Rent**, **Buy**, with the cheapest highlighted and a **break-even output volume** for each of Rent and Buy versus the API. An always-visible **"How this is calculated"** box states the three formulas, what's included/excluded, and the key honesty caveat. An inline SVG chart plots the three lines (API, Rent, Buy) with both break-even points; a JSON **Export** emits `api` / `rent` / `buy` blocks (see `schema.md` §3a).
+You pick an open-weight model — **Phi-4 mini, Phi-4, Mistral Small 4**, plus five popular community models added for coverage (**Llama 3.1 8B, Qwen2.5 7B, Gemma 2 9B, Qwen2.5 32B, Llama 3.3 70B**) — a GPU (L4, A10G, A100-80GB, or H100-80GB), a **rental basis** (on-demand / spot / neocloud), a utilization ceiling and min-replica (HA) floor, your monthly input/output volume, and an API model to compare against. A **Buy / owned-GPU** group (purchase price, useful life, board power/TDP, electricity, PUE, hosting — all auto-filled from the GPU and editable) drives a third cost line. The tab computes — via the pure, unit-tested `selfHostCost()` (rent) and `ownedHourly()` (buy) engines — the GPUs needed and three monthly costs side by side: **API**, **Rent**, **Buy**, with the cheapest highlighted and a **break-even output volume** for each of Rent and Buy versus the API. An always-visible **"How this is calculated"** box states the three formulas, what's included/excluded, and the key honesty caveat. An optional **Engineer / ops $/mo** input (off by default) folds people cost into both the Rent and Buy lines for a true-TCO view. An inline SVG chart plots the three lines (API, Rent, Buy) with both break-even points; a JSON **Export** emits `api` / `rent` / `buy` blocks (see `schema.md` §3a).
 
 > The five community models live in a separate `SELFHOST_EXTRA` list, **not** the advisor `MODELS` catalog — so the Cost Advisor still runs its validated 11-model set unchanged. Their API reference prices are an *illustrative* Together AI size-tier snapshot (see `pricing-sources.md` → *Open-weight serverless*); larger models (32B/70B) are infeasible on the 24 GB L4/A10G and the engine reports them so. **Llama 3.3 70B is provisioned as tensor-parallel across 2 cards (`gpus_per_replica: 2`, shown as a `TP×2` badge)** so its cost and break-even reflect two GPUs, not an optimistic single card. Every throughput figure carries a **measured-vs-estimated** provenance tag: the three Phi-4/Mistral anchors are `measured` (representative of published vLLM throughput); the five additions are interpolated `est.` figures, surfaced per-model as an `est.` badge in the picker and Throughput readout.
 
-The core insight it makes visible: **self-host is a step function, the API is linear** — so the honest output is a break-even, not a flat rate. Below break-even the API wins (the GPU sits idle); above it your own GPUs win — and **owning only beats renting if you keep the GPU busy** (idle owned hardware is sunk capital, so at low utilization renting is safer). Every GPU `$/hr`, purchase price, and `tok/s` is an **illustrative snapshot** sourced in `hardware-sources.md`; **spot = preemptible** (eviction overhead unmodeled); throughput varies with precision/batch/sequence length. The tab states a *cost structure*, not a quote, and excludes engineering time/networking/storage — validate on your traffic.
+The core insight it makes visible: **self-host is a step function, the API is linear** — so the honest output is a break-even, not a flat rate. Below break-even the API wins (the GPU sits idle); above it self-hosting wins — and **owning only beats renting if you keep the GPU busy** (idle owned hardware is sunk capital, so at low utilization renting is safer). Every GPU `$/hr`, purchase price, and `tok/s` is an **illustrative snapshot** sourced in `hardware-sources.md`; **spot = preemptible** (eviction overhead unmodeled); throughput varies with precision/batch/sequence length. The tab states a *cost structure*, not a quote; it excludes networking/storage, while engineering/ops time is an optional input (off by default) — validate on your traffic.
 
 ---
 
@@ -107,7 +126,10 @@ Every lever, premium, and filter is auditable in the **decision trace** displaye
 ```
 /
 ├── index.html                  # The prototype — one self-contained file. Open in any browser.
+├── LICENSE                     # MIT.
 ├── README.md                   # This file.
+├── pricing.json                # Machine-readable pricing snapshot (generated from index.html).
+├── build-pricing.js            # Regenerates pricing.json from index.html (the single source of truth).
 ├── pricing-sources.md          # Source map: every API price cited, with provider doc URL and date.
 ├── hardware-sources.md         # Source map for the Self-host tab: GPU $/hr + vLLM throughput, with dates.
 ├── ruleset.md                  # The decision tree, formally specified.
@@ -116,10 +138,26 @@ Every lever, premium, and filter is auditable in the **decision trace** displaye
 ├── validation-set.md           # Test scenarios + invariants with expected outcomes.
 └── tests/
     ├── run.js                  # Advisor validation harness (11 scenarios).
-    └── selfhost.run.js         # Self-host Economics invariant harness (43 assertions: rent + buy + open-weight catalog + provenance tags + 70B TP×2).
+    └── selfhost.run.js         # Self-host Economics invariant harness (50 assertions: rent + buy + open-weight catalog + provenance tags + 70B TP×2 + optional engineer cost).
 ```
 
 No build step. No dependencies. Drop the folder into a GitHub repo, enable GitHub Pages on `main` branch (root), and it's live.
+
+---
+
+## Machine-readable pricing — `pricing.json`
+
+For programmatic consumers (dashboards, eval harnesses, spreadsheets), the catalog is also published as **`pricing.json`** — a versioned, machine-readable snapshot of every model price, self-host hardware entry, and throughput figure.
+
+- **Generated, never hand-edited.** `index.html` is the single source of truth; `pricing.json` is produced from it by `node build-pricing.js`, so the file can never silently drift from what the app computes.
+- **Self-describing.** It carries `schema_version`, `currency` (USD), `token_unit` (`per_1M_tokens`), the API and self-host **snapshot dates**, source-file pointers, and a refresh checklist.
+- **Honest by construction.** Throughput rows keep their `measured` / `est` provenance tag; every price is labeled an illustrative snapshot.
+
+```bash
+node build-pricing.js   # rewrites pricing.json from index.html
+```
+
+To consume it: parse `models[]` (per-1M-token `input` / `output`, tier, capabilities), `hardware[]` (GPU `buy_usd` / `tdp_w` / rental `prices`), and `throughput[]` (per model×GPU `out_tok_s` with provenance). See `schema.md` for field semantics.
 
 ---
 

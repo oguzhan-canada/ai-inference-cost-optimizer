@@ -1,0 +1,755 @@
+{
+  "_comment": "Machine-readable pricing snapshot for the AI Inference Cost Optimizer. Generated from index.html by build-pricing.js — DO NOT edit by hand; edit index.html and re-run.",
+  "schema_version": "1.0",
+  "generated_at": "2026-06-15T04:08:20.446Z",
+  "currency": "USD",
+  "token_unit": "per_1M_tokens",
+  "snapshots": {
+    "api_pricing": "2026-05-31",
+    "self_host_hardware": "2026-06-14"
+  },
+  "sources": {
+    "api_pricing": "pricing-sources.md",
+    "self_host": "hardware-sources.md",
+    "live_demo": "https://oguzhan-canada.github.io/ai-inference-cost-optimizer/",
+    "repository": "https://github.com/oguzhan-canada/ai-inference-cost-optimizer"
+  },
+  "disclaimer": "Illustrative snapshot for directional FinOps guidance only. Verify against current provider documentation before committing to a path. No warranty.",
+  "counts": {
+    "models": 16,
+    "self_host_extra": 5,
+    "hardware": 4,
+    "throughput": 26
+  },
+  "models": [
+    {
+      "id": "ministral-3b",
+      "provider": "Mistral",
+      "name": "Ministral 3B",
+      "tier": 1,
+      "input": 0.1,
+      "output": 0.1,
+      "cached_input": null,
+      "batch": true,
+      "cache": false,
+      "effort": false,
+      "residency": [
+        "global",
+        "us",
+        "eu"
+      ],
+      "selfhost": false
+    },
+    {
+      "id": "mistral-small-4",
+      "provider": "Mistral",
+      "name": "Mistral Small 4",
+      "tier": 2,
+      "input": 0.1,
+      "output": 0.3,
+      "cached_input": null,
+      "batch": true,
+      "cache": false,
+      "effort": false,
+      "residency": [
+        "global",
+        "us",
+        "eu"
+      ],
+      "selfhost": true,
+      "note": "open-weight (Apache 2.0)"
+    },
+    {
+      "id": "mistral-large-3",
+      "provider": "Mistral",
+      "name": "Mistral Large 3",
+      "tier": 3,
+      "input": 0.5,
+      "output": 1.5,
+      "cached_input": null,
+      "batch": true,
+      "cache": false,
+      "effort": false,
+      "residency": [
+        "global",
+        "us",
+        "eu"
+      ],
+      "selfhost": false
+    },
+    {
+      "id": "codestral",
+      "provider": "Mistral",
+      "name": "Codestral",
+      "tier": 2,
+      "input": 0.3,
+      "output": 0.9,
+      "cached_input": null,
+      "batch": true,
+      "cache": false,
+      "effort": false,
+      "residency": [
+        "global",
+        "us",
+        "eu"
+      ],
+      "selfhost": false,
+      "specialty": "coding"
+    },
+    {
+      "id": "gpt-5.4-nano",
+      "provider": "OpenAI",
+      "name": "GPT-5.4 nano",
+      "tier": 1,
+      "input": 0.2,
+      "output": 1.25,
+      "cached_input": 0.02,
+      "batch": true,
+      "cache": true,
+      "effort": false,
+      "residency": [
+        "global",
+        "us"
+      ],
+      "selfhost": false
+    },
+    {
+      "id": "gpt-5.4-mini",
+      "provider": "OpenAI",
+      "name": "GPT-5.4 mini",
+      "tier": 2,
+      "input": 0.75,
+      "output": 4.5,
+      "cached_input": 0.075,
+      "batch": true,
+      "cache": true,
+      "effort": false,
+      "residency": [
+        "global",
+        "us"
+      ],
+      "selfhost": false
+    },
+    {
+      "id": "gpt-5.4",
+      "provider": "OpenAI",
+      "name": "GPT-5.4",
+      "tier": 3,
+      "input": 2.5,
+      "output": 15,
+      "cached_input": 0.25,
+      "batch": true,
+      "cache": true,
+      "effort": true,
+      "residency": [
+        "global",
+        "us"
+      ],
+      "selfhost": false
+    },
+    {
+      "id": "gpt-5.5",
+      "provider": "OpenAI",
+      "name": "GPT-5.5",
+      "tier": 4,
+      "input": 5,
+      "output": 30,
+      "cached_input": 0.5,
+      "batch": true,
+      "cache": true,
+      "effort": true,
+      "residency": [
+        "global",
+        "us"
+      ],
+      "selfhost": false
+    },
+    {
+      "id": "haiku-4.5",
+      "provider": "Anthropic",
+      "name": "Claude Haiku 4.5",
+      "tier": 1,
+      "input": 1,
+      "output": 5,
+      "cached_input": 0.1,
+      "batch": true,
+      "cache": true,
+      "effort": true,
+      "residency": [
+        "global",
+        "us"
+      ],
+      "selfhost": false
+    },
+    {
+      "id": "sonnet-4.6",
+      "provider": "Anthropic",
+      "name": "Claude Sonnet 4.6",
+      "tier": 3,
+      "input": 3,
+      "output": 15,
+      "cached_input": 0.3,
+      "batch": true,
+      "cache": true,
+      "effort": true,
+      "residency": [
+        "global",
+        "us"
+      ],
+      "selfhost": false,
+      "specialty": "agent"
+    },
+    {
+      "id": "opus-4.8",
+      "provider": "Anthropic",
+      "name": "Claude Opus 4.8",
+      "tier": 4,
+      "input": 5,
+      "output": 25,
+      "cached_input": 0.5,
+      "batch": true,
+      "cache": true,
+      "effort": true,
+      "residency": [
+        "global",
+        "us"
+      ],
+      "selfhost": false,
+      "specialty": "agent"
+    },
+    {
+      "id": "gemini-flash-lite",
+      "provider": "Gemini",
+      "name": "Gemini 3.5 Flash-Lite",
+      "tier": 1,
+      "input": 0.25,
+      "output": 1.5,
+      "cached_input": 0.025,
+      "batch": true,
+      "cache": true,
+      "effort": false,
+      "residency": [
+        "global",
+        "us",
+        "eu"
+      ],
+      "selfhost": false
+    },
+    {
+      "id": "foundry-gpt54-mini",
+      "provider": "Microsoft",
+      "name": "Foundry · GPT-5.4 mini",
+      "tier": 2,
+      "input": 0.75,
+      "output": 4.5,
+      "cached_input": 0.075,
+      "batch": true,
+      "cache": true,
+      "effort": false,
+      "residency": [
+        "global",
+        "us",
+        "eu"
+      ],
+      "selfhost": false,
+      "note": "PTU available"
+    },
+    {
+      "id": "foundry-gpt54",
+      "provider": "Microsoft",
+      "name": "Foundry · GPT-5.4",
+      "tier": 3,
+      "input": 2.5,
+      "output": 15,
+      "cached_input": 0.25,
+      "batch": true,
+      "cache": true,
+      "effort": true,
+      "residency": [
+        "global",
+        "us",
+        "eu"
+      ],
+      "selfhost": false,
+      "note": "PTU available"
+    },
+    {
+      "id": "phi-4-mini",
+      "provider": "Microsoft",
+      "name": "Phi-4 mini",
+      "tier": 1,
+      "input": 0.075,
+      "output": 0.3,
+      "cached_input": null,
+      "batch": true,
+      "cache": false,
+      "effort": false,
+      "residency": [
+        "global",
+        "us",
+        "eu"
+      ],
+      "selfhost": true,
+      "note": "open-weight (MIT) · 3.8B params · 128K ctx"
+    },
+    {
+      "id": "phi-4",
+      "provider": "Microsoft",
+      "name": "Phi-4",
+      "tier": 2,
+      "input": 0.125,
+      "output": 0.5,
+      "cached_input": null,
+      "batch": true,
+      "cache": false,
+      "effort": false,
+      "residency": [
+        "global",
+        "us",
+        "eu"
+      ],
+      "selfhost": true,
+      "note": "open-weight (MIT) · 14B params · 16K ctx"
+    }
+  ],
+  "self_host_extra": [
+    {
+      "id": "llama-3.1-8b",
+      "provider": "Meta",
+      "name": "Llama 3.1 8B",
+      "tier": 1,
+      "input": 0.2,
+      "output": 0.2,
+      "cached_input": null,
+      "batch": false,
+      "cache": false,
+      "effort": false,
+      "residency": [
+        "global",
+        "us",
+        "eu"
+      ],
+      "selfhost": true,
+      "note": "open-weight (Llama 3.1 Community) · 8B params · 128K ctx"
+    },
+    {
+      "id": "qwen2.5-7b",
+      "provider": "Alibaba",
+      "name": "Qwen2.5 7B",
+      "tier": 1,
+      "input": 0.2,
+      "output": 0.2,
+      "cached_input": null,
+      "batch": false,
+      "cache": false,
+      "effort": false,
+      "residency": [
+        "global",
+        "us",
+        "eu"
+      ],
+      "selfhost": true,
+      "note": "open-weight (Apache 2.0) · 7B params · 128K ctx"
+    },
+    {
+      "id": "gemma-2-9b",
+      "provider": "Google",
+      "name": "Gemma 2 9B",
+      "tier": 1,
+      "input": 0.3,
+      "output": 0.3,
+      "cached_input": null,
+      "batch": false,
+      "cache": false,
+      "effort": false,
+      "residency": [
+        "global",
+        "us",
+        "eu"
+      ],
+      "selfhost": true,
+      "note": "open-weight (Gemma license) · 9B params · 8K ctx"
+    },
+    {
+      "id": "qwen2.5-32b",
+      "provider": "Alibaba",
+      "name": "Qwen2.5 32B",
+      "tier": 2,
+      "input": 0.8,
+      "output": 0.8,
+      "cached_input": null,
+      "batch": false,
+      "cache": false,
+      "effort": false,
+      "residency": [
+        "global",
+        "us",
+        "eu"
+      ],
+      "selfhost": true,
+      "note": "open-weight (Apache 2.0) · 32B params · 128K ctx"
+    },
+    {
+      "id": "llama-3.3-70b",
+      "provider": "Meta",
+      "name": "Llama 3.3 70B",
+      "tier": 3,
+      "input": 0.9,
+      "output": 0.9,
+      "cached_input": null,
+      "batch": false,
+      "cache": false,
+      "effort": false,
+      "residency": [
+        "global",
+        "us",
+        "eu"
+      ],
+      "selfhost": true,
+      "note": "open-weight (Llama 3.3 Community) · 70B params · 128K ctx"
+    }
+  ],
+  "hardware": [
+    {
+      "id": "l4",
+      "gpu": "NVIDIA L4",
+      "vram_gb": 24,
+      "buy_usd": 2500,
+      "tdp_w": 72,
+      "prices": [
+        {
+          "cloud": "GCP",
+          "basis": "on-demand",
+          "usd_hr": 0.71
+        },
+        {
+          "cloud": "GCP",
+          "basis": "spot",
+          "usd_hr": 0.21
+        },
+        {
+          "cloud": "RunPod",
+          "basis": "neocloud",
+          "usd_hr": 0.44
+        }
+      ]
+    },
+    {
+      "id": "a10g",
+      "gpu": "NVIDIA A10G",
+      "vram_gb": 24,
+      "buy_usd": 3000,
+      "tdp_w": 150,
+      "prices": [
+        {
+          "cloud": "AWS g5",
+          "basis": "on-demand",
+          "usd_hr": 1.01
+        },
+        {
+          "cloud": "AWS g5",
+          "basis": "spot",
+          "usd_hr": 0.35
+        },
+        {
+          "cloud": "RunPod",
+          "basis": "neocloud",
+          "usd_hr": 0.75
+        }
+      ]
+    },
+    {
+      "id": "a100-80gb",
+      "gpu": "NVIDIA A100 80GB",
+      "vram_gb": 80,
+      "buy_usd": 17000,
+      "tdp_w": 300,
+      "prices": [
+        {
+          "cloud": "AWS/GCP",
+          "basis": "on-demand",
+          "usd_hr": 3.43
+        },
+        {
+          "cloud": "GCP",
+          "basis": "spot",
+          "usd_hr": 1.57
+        },
+        {
+          "cloud": "RunPod",
+          "basis": "neocloud",
+          "usd_hr": 1.19
+        }
+      ]
+    },
+    {
+      "id": "h100-80gb",
+      "gpu": "NVIDIA H100 80GB",
+      "vram_gb": 80,
+      "buy_usd": 28000,
+      "tdp_w": 350,
+      "prices": [
+        {
+          "cloud": "AWS p5",
+          "basis": "on-demand",
+          "usd_hr": 6.88
+        },
+        {
+          "cloud": "AWS p5",
+          "basis": "spot",
+          "usd_hr": 2.5
+        },
+        {
+          "cloud": "Lambda",
+          "basis": "neocloud",
+          "usd_hr": 2.49
+        }
+      ]
+    }
+  ],
+  "throughput": [
+    {
+      "model_id": "phi-4-mini",
+      "gpu_id": "l4",
+      "precision": "fp16",
+      "out_tok_s": 2500,
+      "prefill_factor": 8,
+      "source": "measured",
+      "assumptions": "batch≥32, ~1K in / 256 out"
+    },
+    {
+      "model_id": "phi-4-mini",
+      "gpu_id": "a10g",
+      "precision": "fp16",
+      "out_tok_s": 2400,
+      "prefill_factor": 8,
+      "source": "measured",
+      "assumptions": "batch≥32, ~1K in / 256 out"
+    },
+    {
+      "model_id": "phi-4-mini",
+      "gpu_id": "a100-80gb",
+      "precision": "fp16",
+      "out_tok_s": 7000,
+      "prefill_factor": 8,
+      "source": "measured",
+      "assumptions": "batch≥32, ~1K in / 256 out"
+    },
+    {
+      "model_id": "phi-4-mini",
+      "gpu_id": "h100-80gb",
+      "precision": "fp16",
+      "out_tok_s": 9000,
+      "prefill_factor": 8,
+      "source": "measured",
+      "assumptions": "batch≥32, ~1K in / 256 out"
+    },
+    {
+      "model_id": "phi-4",
+      "gpu_id": "l4",
+      "precision": "fp8",
+      "out_tok_s": 900,
+      "prefill_factor": 8,
+      "source": "measured",
+      "assumptions": "FP8 to fit 24GB; batch≥32"
+    },
+    {
+      "model_id": "phi-4",
+      "gpu_id": "a10g",
+      "precision": "fp8",
+      "out_tok_s": 850,
+      "prefill_factor": 8,
+      "source": "measured",
+      "assumptions": "FP8 to fit 24GB; batch≥32"
+    },
+    {
+      "model_id": "phi-4",
+      "gpu_id": "a100-80gb",
+      "precision": "fp16",
+      "out_tok_s": 2750,
+      "prefill_factor": 8,
+      "source": "measured",
+      "assumptions": "batch≥32, ~1K in / 256 out"
+    },
+    {
+      "model_id": "phi-4",
+      "gpu_id": "h100-80gb",
+      "precision": "fp16",
+      "out_tok_s": 3600,
+      "prefill_factor": 8,
+      "source": "measured",
+      "assumptions": "batch≥32, ~1K in / 256 out"
+    },
+    {
+      "model_id": "mistral-small-4",
+      "gpu_id": "a100-80gb",
+      "precision": "fp16",
+      "out_tok_s": 2000,
+      "prefill_factor": 8,
+      "source": "measured",
+      "assumptions": "batch≥32, ~1K in / 256 out"
+    },
+    {
+      "model_id": "mistral-small-4",
+      "gpu_id": "h100-80gb",
+      "precision": "fp16",
+      "out_tok_s": 2550,
+      "prefill_factor": 8,
+      "source": "measured",
+      "assumptions": "batch≥32, ~1K in / 256 out"
+    },
+    {
+      "model_id": "llama-3.1-8b",
+      "gpu_id": "l4",
+      "precision": "fp16",
+      "out_tok_s": 1400,
+      "prefill_factor": 8,
+      "source": "est",
+      "assumptions": "batch≥32, ~1K in / 256 out"
+    },
+    {
+      "model_id": "llama-3.1-8b",
+      "gpu_id": "a10g",
+      "precision": "fp16",
+      "out_tok_s": 1300,
+      "prefill_factor": 8,
+      "source": "est",
+      "assumptions": "batch≥32, ~1K in / 256 out"
+    },
+    {
+      "model_id": "llama-3.1-8b",
+      "gpu_id": "a100-80gb",
+      "precision": "fp16",
+      "out_tok_s": 4200,
+      "prefill_factor": 8,
+      "source": "est",
+      "assumptions": "batch≥32, ~1K in / 256 out"
+    },
+    {
+      "model_id": "llama-3.1-8b",
+      "gpu_id": "h100-80gb",
+      "precision": "fp16",
+      "out_tok_s": 5400,
+      "prefill_factor": 8,
+      "source": "est",
+      "assumptions": "batch≥32, ~1K in / 256 out"
+    },
+    {
+      "model_id": "qwen2.5-7b",
+      "gpu_id": "l4",
+      "precision": "fp16",
+      "out_tok_s": 1500,
+      "prefill_factor": 8,
+      "source": "est",
+      "assumptions": "batch≥32, ~1K in / 256 out"
+    },
+    {
+      "model_id": "qwen2.5-7b",
+      "gpu_id": "a10g",
+      "precision": "fp16",
+      "out_tok_s": 1400,
+      "prefill_factor": 8,
+      "source": "est",
+      "assumptions": "batch≥32, ~1K in / 256 out"
+    },
+    {
+      "model_id": "qwen2.5-7b",
+      "gpu_id": "a100-80gb",
+      "precision": "fp16",
+      "out_tok_s": 4500,
+      "prefill_factor": 8,
+      "source": "est",
+      "assumptions": "batch≥32, ~1K in / 256 out"
+    },
+    {
+      "model_id": "qwen2.5-7b",
+      "gpu_id": "h100-80gb",
+      "precision": "fp16",
+      "out_tok_s": 5800,
+      "prefill_factor": 8,
+      "source": "est",
+      "assumptions": "batch≥32, ~1K in / 256 out"
+    },
+    {
+      "model_id": "gemma-2-9b",
+      "gpu_id": "l4",
+      "precision": "fp16",
+      "out_tok_s": 1200,
+      "prefill_factor": 8,
+      "source": "est",
+      "assumptions": "fp16 ~18GB; batch≥16 on 24GB cards"
+    },
+    {
+      "model_id": "gemma-2-9b",
+      "gpu_id": "a10g",
+      "precision": "fp16",
+      "out_tok_s": 1100,
+      "prefill_factor": 8,
+      "source": "est",
+      "assumptions": "fp16 ~18GB; batch≥16 on 24GB cards"
+    },
+    {
+      "model_id": "gemma-2-9b",
+      "gpu_id": "a100-80gb",
+      "precision": "fp16",
+      "out_tok_s": 3800,
+      "prefill_factor": 8,
+      "source": "est",
+      "assumptions": "batch≥32, ~1K in / 256 out"
+    },
+    {
+      "model_id": "gemma-2-9b",
+      "gpu_id": "h100-80gb",
+      "precision": "fp16",
+      "out_tok_s": 4900,
+      "prefill_factor": 8,
+      "source": "est",
+      "assumptions": "batch≥32, ~1K in / 256 out"
+    },
+    {
+      "model_id": "qwen2.5-32b",
+      "gpu_id": "a100-80gb",
+      "precision": "fp8",
+      "out_tok_s": 1500,
+      "prefill_factor": 8,
+      "source": "est",
+      "assumptions": "FP8 ~32GB to leave KV room; batch≥16"
+    },
+    {
+      "model_id": "qwen2.5-32b",
+      "gpu_id": "h100-80gb",
+      "precision": "fp8",
+      "out_tok_s": 1950,
+      "prefill_factor": 8,
+      "source": "est",
+      "assumptions": "FP8 ~32GB to leave KV room; batch≥16"
+    },
+    {
+      "model_id": "llama-3.3-70b",
+      "gpu_id": "a100-80gb",
+      "precision": "fp8",
+      "out_tok_s": 700,
+      "prefill_factor": 8,
+      "source": "est",
+      "gpus_per_replica": 2,
+      "assumptions": "FP8 ~70GB; modeled as TP×2 — 2 cards/replica (single-card is impractically tight)"
+    },
+    {
+      "model_id": "llama-3.3-70b",
+      "gpu_id": "h100-80gb",
+      "precision": "fp8",
+      "out_tok_s": 1100,
+      "prefill_factor": 8,
+      "source": "est",
+      "gpus_per_replica": 2,
+      "assumptions": "FP8 ~70GB; modeled as TP×2 — 2 cards/replica (single-card is impractically tight)"
+    }
+  ],
+  "refresh_checklist": [
+    "Edit the MODELS / SELFHOST_EXTRA / HARDWARE / THROUGHPUT arrays in index.html (single source of truth).",
+    "Update the matching row + date in pricing-sources.md (API) or hardware-sources.md (GPU/throughput).",
+    "Bump SELFHOST_SNAPSHOT_DATE / pricing_snapshot_date in index.html if the snapshot moved.",
+    "Re-run: node tests/run.js && node tests/selfhost.run.js (must stay green).",
+    "Re-run: node build-pricing.js to regenerate this file, then commit both together."
+  ]
+}

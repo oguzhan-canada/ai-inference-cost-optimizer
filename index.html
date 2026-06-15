@@ -1465,12 +1465,12 @@
         <div><span class="k">Buy</span> monthly = GPUs needed &times; (amortized purchase + power&times;PUE + hosting) &times; 730 hr. The card&rsquo;s price spread over the useful life you set, plus power and a slot to run it in.</div>
       </div>
       <p class="sh-method-note"><strong>&ldquo;GPUs needed&rdquo; is the hinge.</strong> It comes from the model&rsquo;s throughput figure at your utilization ceiling and minimum-replica floor &mdash; so both the Rent and Buy columns already reflect <em>your</em> duty cycle. <strong>Owning only wins if you keep the GPU busy:</strong> idle owned hardware is sunk capital you can&rsquo;t hand back, so at low utilization renting is usually safer.</p>
-      <p class="sh-method-note">Renting vs buying only changes the <em>card payment</em>. You still need someone to drive and maintain the stack &mdash; at small scale that engineer costs more than the GPU. So treat this as a <em>cost-structure</em> tool, not a quote.</p>
+      <p class="sh-method-note">Renting vs buying only changes the <em>card payment</em>. You still need someone to drive and maintain the stack &mdash; at small scale that engineer costs more than the GPU. So treat this as a <em>cost-structure</em> tool, not a quote &mdash; or fold that people-cost in directly with the optional <strong>Engineer / ops $/mo</strong> input below.</p>
       <details class="sh-method-more">
         <summary>What&rsquo;s included, what&rsquo;s excluded &amp; the key assumptions</summary>
         <div class="sh-method-body">
-          <p><strong>Included:</strong> GPU capital amortized over a useful life you choose, electricity &times; a cooling/overhead factor (PUE), a flat server/colo/ops slice per GPU, and the API&rsquo;s list price for the same volume.</p>
-          <p><strong>Excluded:</strong> engineers&rsquo; time to build and run the stack, networking, storage, data egress, spot-eviction/restart overhead, and any model-quality difference. At small scale these usually dwarf the rent-vs-buy gap.</p>
+          <p><strong>Included:</strong> GPU capital amortized over a useful life you choose, electricity &times; a cooling/overhead factor (PUE), a flat server/colo/ops slice per GPU, and the API&rsquo;s list price for the same volume. Optionally, an <strong>engineer / ops $/mo</strong> you enter (off by default) is added to both the Rent and Buy lines to model true TCO.</p>
+          <p><strong>Excluded:</strong> networking, storage, data egress, spot-eviction/restart overhead, and any model-quality difference. Engineers&rsquo; time to build and run the stack is excluded <em>by default</em>, but can be added via the optional engineer / ops $/mo input above. At small scale these usually dwarf the rent-vs-buy gap.</p>
           <p><strong>Key assumptions:</strong> throughput is an illustrative snapshot at a fixed precision, batch size and sequence length; input (&ldquo;prefill&rdquo;) tokens are counted at a fraction of an output token; the input:output ratio is held fixed when solving for break-even. Rented <strong>neocloud</strong> rates sit below hyperscaler list because they are roughly amortized hardware <em>plus a thin margin</em>, with cheaper power, denser packing and more competition &mdash; an intuition, not a line in the formula.</p>
         </div>
       </details>
@@ -1518,6 +1518,11 @@
           <label for="sh-minrep">Min replicas (HA floor)</label>
           <input type="number" id="sh-minrep" value="1" min="1" max="8" step="1" />
           <div class="unit">GPUs always on</div>
+        </div>
+        <div class="field" style="margin:0">
+          <label for="sh-eng">Engineer / ops <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
+          <input type="number" id="sh-eng" value="0" min="0" step="500" />
+          <div class="unit">USD / mo &middot; people cost (rent &amp; buy)</div>
         </div>
         <div class="field" style="margin:0;display:flex;flex-direction:column;justify-content:flex-end">
           <button class="btn primary" id="sh-export" style="width:100%">Export JSON</button>
@@ -1608,7 +1613,7 @@
     <div class="sh-infeasible" id="sh-infeasible" style="display:none"></div>
 
     <div class="routing-note" style="margin-top:22px;border-top:1px solid var(--border);padding-top:14px">
-      <strong>Always:</strong> GPU <span style="font-family:var(--mono)">$/hr</span> and tok/s are <strong>illustrative snapshots</strong> (cited in <span style="font-family:var(--mono)">hardware-sources.md</span>), not quotes · <strong>spot = preemptible</strong> (eviction/restart overhead not modeled) · throughput varies with precision / batch / sequence length — <strong>validate on your own traffic</strong> · break-even holds the input:output ratio fixed · this models a <em>cost structure</em>, not a guarantee, and ignores ops/networking/storage and engineering time.
+      <strong>Always:</strong> GPU <span style="font-family:var(--mono)">$/hr</span> and tok/s are <strong>illustrative snapshots</strong> (cited in <span style="font-family:var(--mono)">hardware-sources.md</span>), not quotes · <strong>spot = preemptible</strong> (eviction/restart overhead not modeled) · throughput varies with precision / batch / sequence length — <strong>validate on your own traffic</strong> · break-even holds the input:output ratio fixed · this models a <em>cost structure</em>, not a guarantee, and ignores networking/storage; engineering/ops time is an optional input (off by default).
     </div>
   </div>
 
@@ -1847,15 +1852,15 @@
           <h3>Provenance &amp; honesty</h3>
           <ul>
             <li><strong>Measured vs estimated.</strong> Every throughput row carries a <code>source</code> tag. The three Phi-4/Mistral anchors are <code>measured</code> (representative of published vLLM throughput); the five community additions are <code>est</code> (illustrative, interpolated from the anchors by parameter count and GPU class). The picker and the Throughput readout show an <code>est.</code> badge so you can tell which is which per-model.</li>
-            <li><strong>Included:</strong> GPU capital amortized over its life, electricity &times; PUE, a flat hosting slice per GPU, and the API&rsquo;s list price for the same volume.</li>
-            <li><strong>Excluded:</strong> engineers&rsquo; time to build and run the stack, networking, storage, data egress, spot-eviction/restart overhead, and any model-quality difference. At small scale these usually dwarf the rent-vs-buy gap.</li>
+            <li><strong>Included:</strong> GPU capital amortized over its life, electricity &times; PUE, a flat hosting slice per GPU, the API&rsquo;s list price for the same volume, and an optional engineer / ops $/mo (off by default) added to both self-host lines.</li>
+            <li><strong>Excluded:</strong> networking, storage, data egress, spot-eviction/restart overhead, and any model-quality difference. Engineers&rsquo; time is excluded by default, but can be added via the optional engineer / ops $/mo input. At small scale these usually dwarf the rent-vs-buy gap.</li>
             <li><strong>Snapshots, not a feed.</strong> Every GPU $/hr, purchase price, and tok/s is an illustrative snapshot sourced in <code>hardware-sources.md</code>; re-verify before any external use.</li>
           </ul>
         </div>
 
         <div class="content-section">
           <h3>Validation</h3>
-          <p><code>selfHostCost()</code> and <code>ownedHourly()</code> are pure and deterministic (same inputs &rarr; same output). The tab ships its own invariant harness, <code>tests/selfhost.run.js</code> (<strong>43 assertions</strong>: rent capacity/break-even, owned amortization, the open-weight catalog, measured/est provenance tags, and 70B TP&times;2 provisioning), kept fully separate from the advisor&rsquo;s <code>tests/run.js</code> (<strong>11/11</strong>), which stays the regression guard.</p>
+          <p><code>selfHostCost()</code> and <code>ownedHourly()</code> are pure and deterministic (same inputs &rarr; same output). The tab ships its own invariant harness, <code>tests/selfhost.run.js</code> (<strong>50 assertions</strong>: rent capacity/break-even, owned amortization, the open-weight catalog, measured/est provenance tags, 70B TP&times;2 provisioning, and the optional engineer/ops cost), kept fully separate from the advisor&rsquo;s <code>tests/run.js</code> (<strong>11/11</strong>), which stays the regression guard.</p>
         </div>
       </div><!-- /#meth-selfhost -->
   </div>
@@ -2188,7 +2193,7 @@
         <li><strong>GPUs &mdash; 4 cards</strong>: NVIDIA L4, A10G, A100-80GB, H100-80GB. A model only appears on a GPU it actually fits in VRAM; oversized pairs (e.g. a 32B or 70B on a 24 GB L4) are reported infeasible rather than silently mispriced.</li>
         <li><strong>Rent vs Buy</strong>: <em>Rent</em> uses on-demand / spot / neocloud $/hr; <em>Buy</em> amortizes a card's purchase price over a useful life and adds power (TDP &times; $/kWh &times; PUE) and flat hosting. The tab shows <strong>API, Rent, and Buy</strong> side by side, with a break-even output volume for each versus the API.</li>
       </ul>
-      <p>The core insight it makes visible: <strong>self-host is a step function, the API is linear</strong> &mdash; so the honest output is a break-even, not a flat rate. Below break-even the API wins (the GPU sits idle); above it self-hosting wins &mdash; and <strong>owning only beats renting if you keep the GPU busy</strong>, since idle owned hardware is sunk capital. Every throughput figure carries a <strong>measured-vs-estimated</strong> provenance tag (the three anchor models are representative of published vLLM throughput; the five additions are interpolated, shown with an <code>est.</code> badge), and <strong>Llama 3.3 70B is provisioned tensor-parallel across two cards (TP&times;2)</strong> so its economics are not single-card optimistic. GPU $/hr, purchase prices, and tok/s are all <strong>illustrative snapshots</strong> sourced in <code>hardware-sources.md</code>; engineering time, networking, storage, and spot-eviction recovery are out of scope. Validate on your own traffic.</p>
+      <p>The core insight it makes visible: <strong>self-host is a step function, the API is linear</strong> &mdash; so the honest output is a break-even, not a flat rate. Below break-even the API wins (the GPU sits idle); above it self-hosting wins &mdash; and <strong>owning only beats renting if you keep the GPU busy</strong>, since idle owned hardware is sunk capital. Every throughput figure carries a <strong>measured-vs-estimated</strong> provenance tag (the three anchor models are representative of published vLLM throughput; the five additions are interpolated, shown with an <code>est.</code> badge), and <strong>Llama 3.3 70B is provisioned tensor-parallel across two cards (TP&times;2)</strong> so its economics are not single-card optimistic. GPU $/hr, purchase prices, and tok/s are all <strong>illustrative snapshots</strong> sourced in <code>hardware-sources.md</code>; networking, storage, and spot-eviction recovery are out of scope, while engineering/ops time is an optional input (off by default). Validate on your own traffic.</p>
     </div>
 
     <div class="content-section">
@@ -2361,7 +2366,7 @@ const SELFHOST_EXTRA = [
    basis: 'on-demand' | 'spot' | 'neocloud' · volIn_M/volOut_M: monthly MTok
    opts:  { utilCeiling=0.7, minReplicas=1, hoursPerMonth=730, includePrefill=true, apiRef=null } */
 function selfHostCost(model, hw, basis, volIn_M, volOut_M, opts) {
-  opts = Object.assign({ utilCeiling: 0.7, minReplicas: 1, hoursPerMonth: 730, includePrefill: true, apiRef: null, overrideUsdHr: null, ownedLabel: 'owned' }, opts || {});
+  opts = Object.assign({ utilCeiling: 0.7, minReplicas: 1, hoursPerMonth: 730, includePrefill: true, apiRef: null, overrideUsdHr: null, ownedLabel: 'owned', engMonthlyUsd: 0 }, opts || {});
   const round = (x, d) => { if (!isFinite(x)) return x; const f = Math.pow(10, d); return Math.round(x * f) / f; };
 
   if (!model || !hw) return { feasible: false, reason: 'missing model or hardware' };
@@ -2380,6 +2385,7 @@ function selfHostCost(model, hw, basis, volIn_M, volOut_M, opts) {
   }
   const hours = opts.hoursPerMonth;
   const util  = opts.utilCeiling;
+  const eng   = Math.max(0, opts.engMonthlyUsd || 0);   // fixed people-cost $/mo (applies to rent & buy), default 0
   const gpr = Math.max(1, Math.floor(tp.gpus_per_replica || 1));            // GPUs per replica (tensor-parallel degree)
   const capacityPerReplicaMonth = tp.out_tok_s * 3600 * hours * util;       // output tokens / replica / month
   const usePrefill = opts.includePrefill && tp.prefill_factor > 0;
@@ -2387,7 +2393,7 @@ function selfHostCost(model, hw, basis, volIn_M, volOut_M, opts) {
   const outEquivVol = (volOut_M * 1e6) + (usePrefill ? (volIn_M * 1e6) / tp.prefill_factor : 0);
   const replicasNeeded = Math.max(opts.minReplicas, Math.ceil(outEquivVol / capacityPerReplicaMonth));
   const gpusNeeded  = replicasNeeded * gpr;                                 // each replica costs gpr GPUs
-  const monthly     = gpusNeeded * usdHr * hours;
+  const monthly     = gpusNeeded * usdHr * hours + eng;   // compute + fixed people-cost
   const perMTokOut  = volOut_M > 0 ? monthly / volOut_M : Infinity;
   const utilization = replicasNeeded > 0 ? outEquivVol / (replicasNeeded * capacityPerReplicaMonth) : 0;
   const floorPerMTokOut = (usdHr * gpr / (tp.out_tok_s * 3600 * util)) * 1e6;
@@ -2398,7 +2404,7 @@ function selfHostCost(model, hw, basis, volIn_M, volOut_M, opts) {
   const apiMonthly = vOut => apiM.input * (vOut * ratio) + apiM.output * vOut;
   const shMonthly  = vOut => {
     const oev = (vOut * 1e6) + (usePrefill ? (vOut * ratio * 1e6) / tp.prefill_factor : 0);
-    return Math.max(opts.minReplicas, Math.ceil(oev / capacityPerReplicaMonth)) * gpr * usdHr * hours;
+    return Math.max(opts.minReplicas, Math.ceil(oev / capacityPerReplicaMonth)) * gpr * usdHr * hours + eng;
   };
   let breakeven = null;
   for (let v = 0.01; v <= 1e6; v *= 1.1) {
@@ -2413,6 +2419,7 @@ function selfHostCost(model, hw, basis, volIn_M, volOut_M, opts) {
     gpus_needed: gpusNeeded, gpus_per_replica: gpr,
     utilization: round(utilization, 4),
     monthly: round(monthly, 2),
+    eng_monthly: round(eng, 2),
     per_mtok_out: volOut_M > 0 ? round(perMTokOut, 4) : null,
     floor_per_mtok_out: round(floorPerMTokOut, 4),
     breakeven_vs: apiM.id,
@@ -3351,7 +3358,7 @@ recompute();
   }
 
   /* ── chart (inline SVG, no dependency) ──────────────── */
-  function buildChart(model, hw, basis, volIn, volOut, util, minRep, apiRef, rentBe, buyBe, ownedUsdHr) {
+  function buildChart(model, hw, basis, volIn, volOut, util, minRep, apiRef, rentBe, buyBe, ownedUsdHr, eng) {
     var tp = THROUGHPUT.find(function (t) { return t.model_id === model.id && t.gpu_id === hw.id; });
     var priceObj = hw.prices.find(function (p) { return p.basis === basis; });
     if (!tp || !priceObj) return '';
@@ -3364,8 +3371,8 @@ recompute();
       var oev = (v * 1e6) + (v * ratio * 1e6) / pf;
       return Math.max(minRep, Math.ceil(oev / capacity)) * gpr;
     }
-    function rentMonthly(v) { return gpusAt(v) * rentHr * HOURS; }
-    function buyMonthly(v) { return ownedUsdHr ? gpusAt(v) * ownedUsdHr * HOURS : null; }
+    function rentMonthly(v) { return gpusAt(v) * rentHr * HOURS + (eng || 0); }
+    function buyMonthly(v) { return ownedUsdHr ? gpusAt(v) * ownedUsdHr * HOURS + (eng || 0) : null; }
     function apiMonthly(v) { return apiRef.input * (v * ratio) + apiRef.output * v; }
 
     var anchor = Math.max(rentBe || 0, buyBe || 0, volOut);
@@ -3443,6 +3450,7 @@ recompute();
     var volOut = Math.max(0.0001, parseFloat($('sh-vol-out').value) || 0);
     var util = (parseFloat($('sh-util').value) || 70) / 100;
     var minRep = Math.max(1, Math.round(parseFloat($('sh-minrep').value) || 1));
+    var eng = Math.max(0, parseFloat($('sh-eng').value) || 0);   // optional engineer/ops $/mo (rent & buy)
     var apiSel = $('sh-api').value;
     var apiRef = (apiSel === '__same__') ? model : MODELS.find(function (m) { return m.id === apiSel; });
     if (!apiRef) apiRef = model;
@@ -3450,7 +3458,7 @@ recompute();
     $('sh-util-val').textContent = Math.round(util * 100) + '%';
 
     var res = selfHostCost(model, hw, basis, volIn, volOut,
-      { utilCeiling: util, minReplicas: minRep, hoursPerMonth: HOURS, includePrefill: true, apiRef: apiRef });
+      { utilCeiling: util, minReplicas: minRep, hoursPerMonth: HOURS, includePrefill: true, apiRef: apiRef, engMonthlyUsd: eng });
 
     if (!res.feasible) {
       $('sh-result').style.display = 'none';
@@ -3468,7 +3476,7 @@ recompute();
     var oh = ownedHourly(hw, oOpts);
     var resBuy = oh ? selfHostCost(model, hw, basis, volIn, volOut,
       { utilCeiling: util, minReplicas: minRep, hoursPerMonth: HOURS, includePrefill: true, apiRef: apiRef,
-        overrideUsdHr: oh.usd_hr, ownedLabel: 'owned' }) : null;
+        overrideUsdHr: oh.usd_hr, ownedLabel: 'owned', engMonthlyUsd: eng }) : null;
 
     var ratio = (volIn > 0 && volOut > 0) ? volIn / volOut : 0;
     var apiAtVol = apiRef.input * (volOut * ratio) + apiRef.output * volOut;
@@ -3515,10 +3523,10 @@ recompute();
     $('sh-api-monthly').textContent = money(apiAtVol);
     $('sh-api-sub').textContent = 'vs ' + apiRef.name + ' API \u00b7 ' + mtok(volOut) + ' MTok out';
     $('sh-rent-monthly').textContent = money(rentMo);
-    $('sh-rent-sub').textContent = res.gpus_needed + '\u00d7 ' + res.gpu + ' \u00b7 rent ' + basis + ' \u00b7 $' + res.usd_hr.toFixed(2) + '/hr';
+    $('sh-rent-sub').textContent = res.gpus_needed + '\u00d7 ' + res.gpu + ' \u00b7 rent ' + basis + ' \u00b7 $' + res.usd_hr.toFixed(2) + '/hr' + (eng > 0 ? ' \u00b7 +' + money(eng) + '/mo ops' : '');
     if (buyMo != null) {
       $('sh-buy-monthly').textContent = money(buyMo);
-      $('sh-buy-sub').textContent = resBuy.gpus_needed + '\u00d7 owned \u00b7 $' + oh.usd_hr.toFixed(2) + '/hr amortized \u00b7 ' + oOpts.lifeYears + 'yr life';
+      $('sh-buy-sub').textContent = resBuy.gpus_needed + '\u00d7 owned \u00b7 $' + oh.usd_hr.toFixed(2) + '/hr amortized \u00b7 ' + oOpts.lifeYears + 'yr life' + (eng > 0 ? ' \u00b7 +' + money(eng) + '/mo ops' : '');
     } else {
       $('sh-buy-monthly').textContent = '\u2014';
       $('sh-buy-sub').textContent = 'set a GPU purchase price above';
@@ -3536,17 +3544,17 @@ recompute();
     $('sh-tput').innerHTML = res.out_tok_s.toLocaleString() + ' tok/s' + (res.throughput_source === 'est' ? ' <span class="sh-tag">est.</span>' : '');
 
     // chart
-    $('sh-chart').innerHTML = buildChart(model, hw, basis, volIn, volOut, util, minRep, apiRef, rentBe, buyBe, oh ? oh.usd_hr : null);
+    $('sh-chart').innerHTML = buildChart(model, hw, basis, volIn, volOut, util, minRep, apiRef, rentBe, buyBe, oh ? oh.usd_hr : null, eng);
 
     // export payload
     lastExport = {
       generated_at: new Date().toISOString(),
       snapshot_date: res.snapshot_date,
-      schema_version: '0.2',
+      schema_version: '0.3',
       inputs: {
         model_id: model.id, gpu_id: hw.id, rental_basis: basis,
         vol_in_mtok: volIn, vol_out_mtok: volOut,
-        util_ceiling: util, min_replicas: minRep, compare_vs: apiRef.id
+        util_ceiling: util, min_replicas: minRep, engineer_monthly_usd: eng, compare_vs: apiRef.id
       },
       cheapest_at_volume: winner,
       api: {
@@ -3558,7 +3566,7 @@ recompute();
         rental_basis: res.price_basis, cloud: res.cloud, usd_hr: res.usd_hr,
         precision: res.precision, out_tok_s: res.out_tok_s, throughput_source: res.throughput_source,
         gpus_needed: res.gpus_needed, gpus_per_replica: res.gpus_per_replica, utilization: res.utilization,
-        monthly_cost_usd: res.monthly, per_mtok_out_usd: res.per_mtok_out,
+        monthly_cost_usd: res.monthly, engineer_monthly_usd: res.eng_monthly, per_mtok_out_usd: res.per_mtok_out,
         floor_per_mtok_out_usd: res.floor_per_mtok_out,
         breakeven_volout_mtok: res.breakeven_volout_mtok,
         delta_vs_api_usd: Number((apiAtVol - res.monthly).toFixed(2))
@@ -3575,7 +3583,7 @@ recompute();
           usd_per_kwh: oh.usd_per_kwh, pue: oh.pue, hosting_per_month: oh.hosting_per_month
         },
         gpus_needed: resBuy.gpus_needed, gpus_per_replica: resBuy.gpus_per_replica, utilization: resBuy.utilization,
-        monthly_cost_usd: resBuy.monthly, per_mtok_out_usd: resBuy.per_mtok_out,
+        monthly_cost_usd: resBuy.monthly, engineer_monthly_usd: resBuy.eng_monthly, per_mtok_out_usd: resBuy.per_mtok_out,
         floor_per_mtok_out_usd: resBuy.floor_per_mtok_out,
         breakeven_volout_mtok: resBuy.breakeven_volout_mtok,
         delta_vs_api_usd: Number((apiAtVol - resBuy.monthly).toFixed(2)),
@@ -3588,13 +3596,13 @@ recompute();
         'Buying only wins if the GPU stays busy at your utilization; idle owned hardware is sunk capital, so at low utilization renting is usually safer.',
         'spot = preemptible; eviction/restart overhead not modeled.',
         'throughput varies with precision/batch/sequence length — validate on your traffic.',
-        'excludes engineering time, networking, storage and data egress — these usually dwarf the rent-vs-buy gap at small scale.'
+        'Engineer/ops time is included only when engineer_monthly_usd > 0 (off by default); still excludes networking, storage and data egress — at small scale these usually dwarf the rent-vs-buy gap.'
       ]
     };
   }
 
   /* ── wiring ─────────────────────────────────────────── */
-  ['sh-model', 'sh-basis', 'sh-vol-in', 'sh-vol-out', 'sh-util', 'sh-minrep', 'sh-api',
+  ['sh-model', 'sh-basis', 'sh-vol-in', 'sh-vol-out', 'sh-util', 'sh-minrep', 'sh-api', 'sh-eng',
    'sh-buy-price', 'sh-life', 'sh-tdp', 'sh-kwh', 'sh-pue', 'sh-hosting'].forEach(function (id) {
     var el = $(id);
     el.addEventListener('change', recompute);
@@ -3641,9 +3649,19 @@ recompute();
     var tp = selfHostCost(SH_MODELS.find(function (m) { return m.id === 'llama-3.3-70b'; }), h100, 'spot', 1, 0.2, { apiRef: pm, minReplicas: 1 });
     var tpOk = !!tp && tp.feasible && tp.gpus_per_replica === 2 && tp.gpus_needed % 2 === 0 && t.gpus_per_replica === 1;
 
-    var ok = rentOk && ohOk && buyOk && catOk && tpOk;
+    // Engineer/ops $/mo: a fixed addend raises monthly by exactly that, leaves the marginal floor untouched, and never pulls break-even in
+    var engBase = selfHostCost(pm, l4, 'spot', 100, 20, { apiRef: pm, utilCeiling: 0.7, minReplicas: 1 });
+    var engWith = selfHostCost(pm, l4, 'spot', 100, 20, { apiRef: pm, utilCeiling: 0.7, minReplicas: 1, engMonthlyUsd: 1000 });
+    var engOk = engBase.feasible && engWith.feasible
+      && Math.abs((engWith.monthly - engBase.monthly) - 1000) < 1e-6
+      && engWith.floor_per_mtok_out === engBase.floor_per_mtok_out
+      && engWith.eng_monthly === 1000 && engBase.eng_monthly === 0
+      && (engBase.breakeven_volout_mtok == null || engWith.breakeven_volout_mtok == null
+          || engWith.breakeven_volout_mtok >= engBase.breakeven_volout_mtok);
+
+    var ok = rentOk && ohOk && buyOk && catOk && tpOk && engOk;
     console.log('[selfhost self-test] ' + (ok ? 'PASS' : 'FAIL')
-      + ' (rent ' + (rentOk ? 'ok' : 'X') + ', ownedHr ' + (ohOk ? 'ok' : 'X') + ', buy ' + (buyOk ? 'ok' : 'X') + ', catalog ' + (catOk ? 'ok' : 'X') + ', tp ' + (tpOk ? 'ok' : 'X') + ')');
+      + ' (rent ' + (rentOk ? 'ok' : 'X') + ', ownedHr ' + (ohOk ? 'ok' : 'X') + ', buy ' + (buyOk ? 'ok' : 'X') + ', catalog ' + (catOk ? 'ok' : 'X') + ', tp ' + (tpOk ? 'ok' : 'X') + ', eng ' + (engOk ? 'ok' : 'X') + ')');
   } catch (e) { console.log('[selfhost self-test] ERROR ' + e.message); }
 
   fillOwnedFromGpu();

@@ -189,6 +189,34 @@ ok('open-weight throughput is tagged est (llama-3.1-8b/h100)',
 ok('single-card model still 1 GPU at tiny volume (gpr default = 1)',
    selfHostCost(SX('llama-3.1-8b'), HW('h100-80gb'), 'spot', 0.001, 0.0002, opts({ minReplicas: 1 })).gpus_needed === 1);
 
+// Track A.5 — optional engineer/ops $/mo (fixed people-cost; true-TCO break-even)
+(function () {
+  const model = M('phi-4'), hw = HW('a100-80gb');
+  const base = selfHostCost(model, hw, 'spot', 200, 40, opts({ apiRef: model }));
+  const eng  = selfHostCost(model, hw, 'spot', 200, 40, opts({ apiRef: model, engMonthlyUsd: 1500 }));
+  ok('engineer cost adds exactly to monthly (+$1500)', approx(eng.monthly - base.monthly, 1500, 1e-9),
+     `delta=${(eng.monthly - base.monthly)}`);
+  ok('engine reports eng_monthly (1500 vs default 0)', eng.eng_monthly === 1500 && base.eng_monthly === 0,
+     `eng=${eng.eng_monthly} base=${base.eng_monthly}`);
+  ok('engineer cost does NOT change the marginal floor (fixed, not per-token)',
+     eng.floor_per_mtok_out === base.floor_per_mtok_out,
+     `eng=${eng.floor_per_mtok_out} base=${base.floor_per_mtok_out}`);
+  ok('engineer cost raises per_mtok_out (realized blended rate)',
+     eng.per_mtok_out > base.per_mtok_out, `eng=${eng.per_mtok_out} base=${base.per_mtok_out}`);
+  ok('engineer cost pushes break-even out, never in',
+     base.breakeven_volout_mtok == null || eng.breakeven_volout_mtok == null ||
+     eng.breakeven_volout_mtok >= base.breakeven_volout_mtok,
+     `base=${base.breakeven_volout_mtok} eng=${eng.breakeven_volout_mtok}`);
+  ok('engineer cost defaults to 0 (omitted === explicit 0)',
+     JSON.stringify(selfHostCost(model, hw, 'spot', 200, 40, opts({ apiRef: model }))) ===
+     JSON.stringify(selfHostCost(model, hw, 'spot', 200, 40, opts({ apiRef: model, engMonthlyUsd: 0 }))));
+  ok('engineer cost applies to owned/buy basis too (same +$1500)',
+     approx(
+       selfHostCost(model, hw, 'owned', 200, 40, opts({ apiRef: model, overrideUsdHr: 1.0, engMonthlyUsd: 1500 })).monthly -
+       selfHostCost(model, hw, 'owned', 200, 40, opts({ apiRef: model, overrideUsdHr: 1.0 })).monthly,
+       1500, 1e-9));
+})();
+
 // 4. Report
 console.log(`\n${pass}/${pass + fail} passing`);
 fs.unlinkSync(tmpPath);

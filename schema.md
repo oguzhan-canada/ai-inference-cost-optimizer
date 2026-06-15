@@ -186,23 +186,24 @@ What you get from the "Export JSON" button.
 
 ## 3a. Self-host export (Self-host Economics tab)
 
-The **Export JSON** button on the Self-host Economics tab emits its own document (independent of the advisor export above). It reuses the shared JSON modal. As of **schema 0.2** it reports all three options — **API**, **Rent**, **Buy** — side by side.
+The **Export JSON** button on the Self-host Economics tab emits its own document (independent of the advisor export above). It reuses the shared JSON modal. As of **schema 0.3** it reports all three options — **API**, **Rent**, **Buy** — side by side, and folds an optional engineer / ops cost into the two self-host lines.
 
 ```jsonc
 {
   "generated_at":   "2026-06-14T14:22:18.401Z",
   "snapshot_date":  "2026-06-14",          // from SELFHOST_SNAPSHOT_DATE
-  "schema_version": "0.2",
+  "schema_version": "0.3",
 
   "inputs": {
-    "model_id":     "phi-4-mini",
-    "gpu_id":       "l4",
-    "rental_basis": "spot",                // on-demand | spot | neocloud (drives the Rent column only)
-    "vol_in_mtok":  100,
-    "vol_out_mtok": 20,
-    "util_ceiling": 0.70,
-    "min_replicas": 1,
-    "compare_vs":   "phi-4-mini"           // API reference model id
+    "model_id":             "phi-4-mini",
+    "gpu_id":               "l4",
+    "rental_basis":         "spot",        // on-demand | spot | neocloud (drives the Rent column only)
+    "vol_in_mtok":          100,
+    "vol_out_mtok":         20,
+    "util_ceiling":         0.70,
+    "min_replicas":         1,
+    "engineer_monthly_usd": 0,             // optional people cost added to Rent & Buy (0 = off, the default)
+    "compare_vs":           "phi-4-mini"   // API reference model id
   },
 
   "cheapest_at_volume": "api",             // "api" | "rent" | "buy" — lowest monthly at the user's volume
@@ -228,9 +229,10 @@ The **Export JSON** button on the Self-host Economics tab emits its own document
     "gpus_needed":            1,
     "gpus_per_replica":       1,            // tensor-parallel cards per replica (Llama 3.3 70B = 2)
     "utilization":            0.007,        // fraction of capacity used at this volume
-    "monthly_cost_usd":       153.30,       // gpus_needed × usd_hr × 730
-    "per_mtok_out_usd":       7.665,        // monthly ÷ vol_out (null if vol_out = 0)
-    "floor_per_mtok_out_usd": 0.033,        // asymptotic unit cost at full utilization
+    "monthly_cost_usd":       153.30,       // gpus_needed × usd_hr × 730 (+ engineer_monthly_usd)
+    "engineer_monthly_usd":   0,            // optional people cost, already included in monthly_cost_usd above (0 = off)
+    "per_mtok_out_usd":       7.665,        // monthly ÷ vol_out (null if vol_out = 0); includes engineer cost
+    "floor_per_mtok_out_usd": 0.033,        // asymptotic unit cost at full utilization (marginal — excludes the fixed engineer_monthly_usd)
     "breakeven_volout_mtok":  244,          // output MTok/mo where Rent ≤ API (null if none in range)
     "delta_vs_api_usd":       -139.80       // api_monthly − rent_monthly (positive ⇒ rent cheaper)
   },
@@ -253,9 +255,10 @@ The **Export JSON** button on the Self-host Economics tab emits its own document
     "gpus_needed":            1,            // same as Rent — set by throughput × utilization
     "gpus_per_replica":       1,            // same as Rent — tensor-parallel cards per replica
     "utilization":            0.007,
-    "monthly_cost_usd":       328.89,       // gpus_needed × effective_usd_hr × 730
+    "monthly_cost_usd":       328.89,       // gpus_needed × effective_usd_hr × 730 (+ engineer_monthly_usd)
+    "engineer_monthly_usd":   0,            // same optional people cost as Rent (people cost is rent/buy-agnostic)
     "per_mtok_out_usd":       16.44,
-    "floor_per_mtok_out_usd": 0.072,
+    "floor_per_mtok_out_usd": 0.072,        // marginal — excludes the fixed engineer_monthly_usd
     "breakeven_volout_mtok":  523,          // output MTok/mo where Buy ≤ API (null if none in range)
     "delta_vs_api_usd":       -315.39,      // api_monthly − buy_monthly
     "delta_vs_rent_usd":      -175.59       // rent_monthly − buy_monthly (positive ⇒ buy cheaper than rent)
@@ -268,7 +271,7 @@ The **Export JSON** button on the Self-host Economics tab emits its own document
     "include_prefill": true
   },
 
-  "caveats": [ "…", "…" ]                   // illustrative snapshots, rent/buy formulas, "owning only wins if busy", spot=preemptible, validate on traffic, excludes engineering time
+  "caveats": [ "…", "…" ]                   // illustrative snapshots, rent/buy formulas, "owning only wins if busy", spot=preemptible, validate on traffic; engineering/ops time included only when engineer_monthly_usd > 0
 }
 ```
 
