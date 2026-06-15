@@ -75,6 +75,16 @@ A second, **independent** calculator (it does not touch the Cost Advisor engine 
 
 A closing **"one workload, every layer"** table compares all layers on the single workload: net $/mo is the comparable figure (percentages are each layer against its own baseline and are not comparable across rows), and the lowest-net real option is highlighted. Each card shows baseline → routed inference → net (incl. fee), a per-tier breakdown, and an honest headline that **flips to "costs more"** when a difficult-heavy mix makes routing uneconomic. Two standing caveats are surfaced: the mix assumes **equal tokens-per-request across tiers** (harder tasks usually emit more output, so this likely overstates savings), and each cheap tier is assumed **quality-acceptable** for its slice — validate on real traffic. Figures use list prices only, are per-cloud (not comparable across clouds), and are vendor-stated. Google (Vertex AI Model Optimizer, preview) is deferred pending a verified Gemini Flash/Pro price snapshot.
 
+### Self-host Economics tab
+
+A third, **independent** calculator (it does not touch the Cost Advisor engine, its validation set, or the Routing tab). It answers the one question the advisor's self-host filter leaves open: *self-hosting an open-weight model is not a per-token price — it is fixed GPU capacity, so at what monthly volume does running your own GPUs beat paying the API, and is it cheaper to **rent** or **buy** those GPUs?*
+
+You pick an open-weight model — **Phi-4 mini, Phi-4, Mistral Small 4**, plus five popular community models added for coverage (**Llama 3.1 8B, Qwen2.5 7B, Gemma 2 9B, Qwen2.5 32B, Llama 3.3 70B**) — a GPU (L4, A10G, A100-80GB, or H100-80GB), a **rental basis** (on-demand / spot / neocloud), a utilization ceiling and min-replica (HA) floor, your monthly input/output volume, and an API model to compare against. A **Buy / owned-GPU** group (purchase price, useful life, board power/TDP, electricity, PUE, hosting — all auto-filled from the GPU and editable) drives a third cost line. The tab computes — via the pure, unit-tested `selfHostCost()` (rent) and `ownedHourly()` (buy) engines — the GPUs needed and three monthly costs side by side: **API**, **Rent**, **Buy**, with the cheapest highlighted and a **break-even output volume** for each of Rent and Buy versus the API. An always-visible **"How this is calculated"** box states the three formulas, what's included/excluded, and the key honesty caveat. An inline SVG chart plots the three lines (API, Rent, Buy) with both break-even points; a JSON **Export** emits `api` / `rent` / `buy` blocks (see `schema.md` §3a).
+
+> The five community models live in a separate `SELFHOST_EXTRA` list, **not** the advisor `MODELS` catalog — so the Cost Advisor still runs its validated 11-model set unchanged. Their API reference prices are an *illustrative* Together AI size-tier snapshot (see `pricing-sources.md` → *Open-weight serverless*); larger models (32B/70B) are infeasible on the 24 GB L4/A10G and the engine reports them so. **Llama 3.3 70B is provisioned as tensor-parallel across 2 cards (`gpus_per_replica: 2`, shown as a `TP×2` badge)** so its cost and break-even reflect two GPUs, not an optimistic single card. Every throughput figure carries a **measured-vs-estimated** provenance tag: the three Phi-4/Mistral anchors are `measured` (representative of published vLLM throughput); the five additions are interpolated `est.` figures, surfaced per-model as an `est.` badge in the picker and Throughput readout.
+
+The core insight it makes visible: **self-host is a step function, the API is linear** — so the honest output is a break-even, not a flat rate. Below break-even the API wins (the GPU sits idle); above it your own GPUs win — and **owning only beats renting if you keep the GPU busy** (idle owned hardware is sunk capital, so at low utilization renting is safer). Every GPU `$/hr`, purchase price, and `tok/s` is an **illustrative snapshot** sourced in `hardware-sources.md`; **spot = preemptible** (eviction overhead unmodeled); throughput varies with precision/batch/sequence length. The tab states a *cost structure*, not a quote, and excludes engineering time/networking/storage — validate on your traffic.
+
 ---
 
 ## How it works
@@ -98,13 +108,15 @@ Every lever, premium, and filter is auditable in the **decision trace** displaye
 /
 ├── index.html                  # The prototype — one self-contained file. Open in any browser.
 ├── README.md                   # This file.
-├── pricing-sources.md          # Source map: every price cited, with provider doc URL and date.
+├── pricing-sources.md          # Source map: every API price cited, with provider doc URL and date.
+├── hardware-sources.md         # Source map for the Self-host tab: GPU $/hr + vLLM throughput, with dates.
 ├── ruleset.md                  # The decision tree, formally specified.
-├── schema.md                   # The JSON I/O schema (inputs + recommendation result).
+├── schema.md                   # The JSON I/O schema (advisor result + self-host export).
 ├── wireframe.md                # One-page wireframe & layout intent.
-├── validation-set.md           # Test scenarios with expected outcomes.
+├── validation-set.md           # Test scenarios + invariants with expected outcomes.
 └── tests/
-    └── run.js                  # Extracted validation harness.
+    ├── run.js                  # Advisor validation harness (11 scenarios).
+    └── selfhost.run.js         # Self-host Economics invariant harness (43 assertions: rent + buy + open-weight catalog + provenance tags + 70B TP×2).
 ```
 
 No build step. No dependencies. Drop the folder into a GitHub repo, enable GitHub Pages on `main` branch (root), and it's live.
@@ -154,6 +166,7 @@ React/Next is overkill for a tool that doesn't need routing, server state, or au
 - **Pricing is a snapshot, not a feed.** Re-run the `pricing-sources.md` audit before any external use. AI inference prices move fast.
 - **Quality bar is self-reported.** The tool trusts the user's quality assessment; there's no eval loop. A specialty-mismatch note fires when a coding/agent-specialty model is bypassed for cost reasons.
 - **Volume model is monthly totals.** Token mix per request is implicit. For workloads with unusual input/output ratios (e.g. agent loops), break the volume into per-call rates externally.
+- **Self-host economics are now modeled (open-weight only).** The Self-host Economics tab turns the advisor's self-host disclaimer into a real GPU-capacity break-even (`selfHostCost()` + `ownedHourly()` + `hardware-sources.md`). It compares **API vs renting vs buying** GPUs: rent uses on-demand/spot/neocloud `$/hr`; buy amortizes purchase price over a useful life and adds power (TDP × `$/kWh` × PUE) and flat hosting. Ops, networking, storage, spot-eviction recovery, and engineering time are out of scope, and GPU `$/hr`, purchase prices, and throughput are all illustrative snapshots.
 - **16 models, 5 providers** — a deliberately curated v0.1 scope. Not every model from every provider is included; the selection emphasizes practical cost comparison over exhaustive coverage.
 - **No live benchmarks.** Tier assignments are editorial, not empirical. A model classified as "tier 2" may outperform some "tier 3" models on specific tasks.
 - **No persistence.** The page is stateless. Use the JSON export to save a decision.

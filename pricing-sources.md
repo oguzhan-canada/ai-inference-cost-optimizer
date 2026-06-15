@@ -5,7 +5,7 @@
 **Refresh cadence (recommended):** Monthly for production use; weekly during pricing-volatile periods (e.g. when a major provider releases a new tier).
 **Currency:** All prices in USD per million tokens (USD/MTok) unless otherwise noted.
 
-This map is the single source of truth for every number embedded in `index.html`'s `MODELS` array. When updating prices, update this file *and* the corresponding entry in the HTML in the same commit.
+This map is the single source of truth for every number embedded in `index.html`'s `MODELS` array (and the Self-host tab's `SELFHOST_EXTRA` reference prices — see the **Open-weight serverless** section). When updating prices, update this file *and* the corresponding entry in the HTML in the same commit.
 
 ---
 
@@ -121,6 +121,29 @@ Microsoft's own small language models, available on Azure AI Foundry as serverle
 
 ---
 
+## Open-weight serverless (Self-host tab reference)
+
+**Snapshot date:** 2026-06-14 · **Scope:** the Self-host Economics tab only (these are *not* in the advisor `MODELS` catalog).
+
+These five open-weight models are **self-host-only** entries (`SELFHOST_EXTRA` in `index.html`, kept out of the advisor `MODELS` array so they never change the Cost Advisor's recommendations — the advisor still runs its validated 11-model catalog). Their input/output prices are **not** a first-party API rate; they are an **illustrative serverless reference** used as the "rent the same model from an API" baseline for the self-host break-even. We use **Together AI's published size-tiered list price** so the five are internally consistent (bigger model ⇒ higher tier) and traceable to a single provider.
+
+| Model | Params | Input $/MTok | Output $/MTok | License | Basis (illustrative) |
+|---|---|---|---|---|---|
+| Llama 3.1 8B | 8B | 0.20 | 0.20 | Llama 3.1 Community | Together size tier (≤ 8B) |
+| Qwen2.5 7B | 7B | 0.20 | 0.20 | Apache 2.0 | Together size tier (≤ 8B) |
+| Gemma 2 9B | 9B | 0.30 | 0.30 | Gemma | Together size tier (8.1–21B) |
+| Qwen2.5 32B | 32B | 0.80 | 0.80 | Apache 2.0 | Together size tier (21.1–41B) |
+| Llama 3.3 70B | 70B | 0.90 | 0.90 | Llama 3.3 Community | Together size tier (41.1–80B) |
+
+**Source:** Together AI pricing — `together.ai/pricing` (size-tiered list price for open models; input = output). Model sizes/licenses from each Hugging Face model card (`meta-llama/Llama-3.1-8B-Instruct`, `meta-llama/Llama-3.3-70B-Instruct`, `Qwen/Qwen2.5-7B-Instruct`, `Qwen/Qwen2.5-32B-Instruct`, `google/gemma-2-9b-it`).
+
+**Notes / honesty**
+- **Verify current.** Open-weight serverless prices vary widely by provider (Together, Fireworks, DeepInfra, Groq, …), by tier (Lite/Turbo/Reference), and over time. DeepInfra and Fireworks are frequently *cheaper* than the Together list tiers used here. These numbers are a transparent, consistent **reference point** for the break-even — not the cheapest quote available, and not a promise.
+- The Self-host tab's default comparison ("the same model's API list price") uses exactly these numbers; you can also compare against any advisor-catalog model via the dropdown.
+- No prompt-cache, batch, or effort discount is modeled for these five — the break-even is list price vs. owned/rented GPU capacity.
+
+---
+
 ## Cohere
 
 Excluded from v0.1 generation-cost candidate set. Cohere is positioned as a retrieval/rerank provider; its cost play is *architectural* (rerank → reduce candidates before sending to a generation model elsewhere). Surface as an architectural recommendation in v0.2 when context size is large and retrieval is in scope.
@@ -160,6 +183,6 @@ The 35% effort reduction estimate comes from the reference doc's "30–70% savin
 
 1. **All pricing is provider-published list price.** Negotiated enterprise rates, committed-spend discounts, and credit programs are not modeled.
 2. **Long-context surcharges** (some OpenAI/Gemini models charge 2× input above a context threshold) are flagged as a context-size note but not algorithmically priced. Add to v0.2.
-3. **Self-host costs** (Mistral open-weight models) are not modeled — only the eligibility filter is. v0.2 should add a GPU-cost calculator (e.g. estimating per-token equivalent for A100/H100 throughput).
+3. **Self-host costs** are now modeled in the **Self-host Economics** tab (open-weight models only): a real GPU-capacity calculator (`selfHostCost()`) with an API-vs-self-host break-even, sourced in `hardware-sources.md` (GPU `$/hr` from cloud/neocloud pricing + the SkyPilot catalog; throughput from vLLM benchmarks). It prices GPU rental only — ops/networking/storage and spot-eviction recovery remain out of scope. The advisor engine still only applies the eligibility filter.
 4. **The Anthropic tokenizer change (Opus 4.7+, +35% tokens)** is not yet reflected in the cost math. Add as a model-level multiplier when migrating workloads from Opus 4.6 or earlier.
 5. **Foundry PTU sizing** requires a separate model (PTU/hr × hours/mo vs pay-per-token monthly). Surfaced as a note in v0.1.

@@ -613,3 +613,122 @@ Expected output on a clean v0.1 build:
 
 These are v0.2 work. The current harness gives us deterministic confidence
 that the rule engine and the lever annotations behave as documented.
+
+---
+
+## 7. Self-host Economics validation (`tests/selfhost.run.js`)
+
+The **Self-host Economics** tab has its own, fully independent harness. It does **not**
+touch `decide()` or the 11 advisor scenarios above — `tests/run.js` stays the regression
+guard. Because self-host cost is a continuous model (not a fixed-scenario decision tree),
+the suite is **invariant-based**: it asserts properties of `selfHostCost()` rather than
+recording one expected winner.
+
+**Engine under test:** `selfHostCost(model, hw, basis, volIn_M, volOut_M, opts)` plus the
+`HARDWARE` and `THROUGHPUT` tables (source: `hardware-sources.md`). The harness extracts the
+same `<script>` region as `tests/run.js` and additionally exports `HARDWARE`, `THROUGHPUT`,
+`selfHostCost`, and `ownedHourly`.
+
+| # | Invariant | Why it matters |
+|---|-----------|----------------|
+| 1 | `HARDWARE` has the 4 expected GPUs (`l4`, `a10g`, `a100-80gb`, `h100-80gb`) | catalog integrity |
+| 2 | `THROUGHPUT` table is non-empty | feasibility data present |
+| 3 | every `HARDWARE` entry has on-demand, spot, and neocloud prices | basis completeness |
+| 4 | an oversized pair (Mistral Small 4 on L4, 24B≯24GB) returns `{feasible:false}` | feasibility-by-presence |
+| 5 | a fitting pair computes a positive monthly cost | happy path |
+| 6 | at tiny volume, `gpus_needed == minReplicas` | idle-floor / HA floor |
+| 7 | at tiny volume, `monthly == minReplicas × $/hr × 730` | floor arithmetic |
+| 8 | `per_mtok_out` strictly falls as volume rises | idle cost amortizes |
+| 9 | `per_mtok_out → floor_per_mtok_out` at scale | asymptote correctness |
+| 10 | spot monthly < on-demand monthly | basis ordering |
+| 11 | `breakeven_volout_mtok` is a positive number | break-even exists |
+| 12 | below break-even, the API is cheaper | crossover direction |
+| 13 | above break-even, self-host is cheaper | crossover direction |
+| 14 | identical inputs → identical output | determinism (pure fn) |
+| 15 | `ownedHourly` is a function | owned engine present |
+| 16 | every `HARDWARE` entry has `buy_usd` and `tdp_w` | buy-model data present |
+| 17 | owned `$/hr` is positive | happy path |
+| 18 | owned `$/hr` == card + power + hosting (parts sum) | decomposition integrity |
+| 19 | card term == `purchase / (life × 8766h)` | amortization formula |
+| 20 | power term == `(W/1000) × $/kWh × PUE` | power formula |
+| 21 | zero hosting drops owned `$/hr` by `hosting/730` | hosting term isolated |
+| 22 | longer useful life → lower owned `$/hr` | amortization monotonicity |
+| 23 | owned `$/hr` feeds `selfHostCost` via `overrideUsdHr` | rent→buy override wiring |
+| 24 | owned monthly == `gpus × owned$/hr × 730` (to the cent) | buy-cost arithmetic |
+| 25 | owned `per_mtok_out` worse at low utilization | idle-penalty / "only wins if busy" |
+| 26 | `SELFHOST_EXTRA` open-weight catalog present (≥ 5 models) | open-weight additions loaded |
+| 27 | `llama-3.1-8b` self-hostable + priced | catalog entry integrity |
+| 28 | `llama-3.3-70b` self-hostable + priced | catalog entry integrity |
+| 29 | `qwen2.5-7b` self-hostable + priced | catalog entry integrity |
+| 30 | `qwen2.5-32b` self-hostable + priced | catalog entry integrity |
+| 31 | `gemma-2-9b` self-hostable + priced | catalog entry integrity |
+| 32 | Llama 3.1 8B feasible on L4 (fits 24 GB) | small-model VRAM fit |
+| 33 | Gemma 2 9B feasible on L4 (fits 24 GB) | 9B-on-24GB fit |
+| 34 | Qwen2.5 32B infeasible on L4 | large-model VRAM guard |
+| 35 | Llama 3.3 70B infeasible on L4 | large-model VRAM guard |
+| 36 | Llama 3.3 70B feasible on H100 with positive monthly | 70B runs on 80 GB card |
+| 37 | Llama 3.1 8B has a positive break-even vs its own API price | `__same__` apiRef wiring |
+| 38 | every `THROUGHPUT` row tags a `source` (`measured`\|`est`) | provenance completeness |
+| 39 | anchor throughput tagged `measured` (Mistral Small 4 / H100) | measured anchors honest |
+| 40 | open-weight throughput tagged `est` (Llama 3.1 8B / H100) | interpolated rows labeled |
+| 41 | Llama 3.3 70B provisions 2 GPUs per replica (`gpus_per_replica===2`, `gpus_needed===2` at tiny vol) | TP×2 provisioning |
+| 42 | 70B tiny monthly == `2 × $/hr × 730` | TP×2 cost is doubled, not single-card |
+| 43 | a single-card model still provisions 1 GPU at tiny volume (gpr default = 1) | TP×2 doesn't regress other models |
+
+### Running it
+
+```bash
+node tests/selfhost.run.js
+```
+
+Expected output on a clean build:
+
+```
+✓ HARDWARE has the 4 GPUs (l4, a10g, a100-80gb, h100-80gb)
+✓ THROUGHPUT table is non-empty
+✓ each HARDWARE entry has on-demand, spot, neocloud prices
+✓ infeasible (VRAM) pair flagged
+✓ feasible pair computes positive monthly
+✓ tiny volume → gpus_needed == minReplicas (1)
+✓ tiny monthly == 1 × $/hr × 730
+✓ per_mtok_out falls as volume rises
+✓ per_mtok_out approaches floor at scale
+✓ spot monthly < on-demand monthly
+✓ break-even volume is a positive number
+✓ below break-even: API cheaper
+✓ above break-even: self-host cheaper
+✓ deterministic (same inputs → same output)
+✓ ownedHourly is a function
+✓ each HARDWARE entry has buy_usd and tdp_w
+✓ owned $/hr is positive
+✓ owned $/hr = card + power + hosting (parts sum)
+✓ owned card term = price / (life × 8766h)
+✓ owned power term = (W/1000) × $/kWh × PUE
+✓ owned includes hosting (zero-hosting drops by hosting/730)
+✓ longer useful life → lower owned $/hr
+✓ owned $/hr feeds selfHostCost (override honored)
+✓ owned monthly == gpus × owned$/hr × 730 (to the cent)
+✓ owned per_mtok_out worse at low utilization (idle penalty)
+✓ SELFHOST_EXTRA open-weight catalog present (>=5 models)
+✓ catalog entry self-hostable + priced: llama-3.1-8b
+✓ catalog entry self-hostable + priced: llama-3.3-70b
+✓ catalog entry self-hostable + priced: qwen2.5-7b
+✓ catalog entry self-hostable + priced: qwen2.5-32b
+✓ catalog entry self-hostable + priced: gemma-2-9b
+✓ Llama 3.1 8B feasible on L4 (fits 24GB)
+✓ Gemma 2 9B feasible on L4 (fits 24GB)
+✓ Qwen2.5 32B infeasible on L4 (VRAM)
+✓ Llama 3.3 70B infeasible on L4 (VRAM)
+✓ Llama 3.3 70B feasible on H100 with positive monthly
+✓ Llama 3.1 8B has a positive break-even vs its own API price
+✓ every THROUGHPUT row tags a source (measured|est)
+✓ anchor throughput is tagged measured (mistral-small-4/h100)
+✓ open-weight throughput is tagged est (llama-3.1-8b/h100)
+✓ Llama 3.3 70B provisions 2 GPUs per replica (TP×2)
+✓ 70B tiny monthly reflects 2 cards (gpus × $/hr × 730)
+✓ single-card model still 1 GPU at tiny volume (gpr default = 1)
+
+43/43 passing
+```
+
+**Gate for the self-host feature:** `tests/run.js` 11/11 **and** `tests/selfhost.run.js` 43/43.

@@ -739,6 +739,7 @@
   /* ─── Tabs ─────────────────────────────────────── */
   .tab-nav {
     display: flex;
+    flex-wrap: wrap;
     gap: 0;
     border-bottom: 1px solid var(--border);
     margin-bottom: 32px;
@@ -775,6 +776,46 @@
     color: var(--accent);
     border-bottom-color: var(--accent);
     background: var(--surface-1);
+  }
+  /* ── Methodology sub-tabs (second-level nav) ── */
+  #tab-methodology .subtab-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 28px;
+    padding: 5px;
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  #tab-methodology .subtab-btn {
+    background: none;
+    border: none;
+    border-radius: 6px;
+    color: var(--text-muted);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 9px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  #tab-methodology .subtab-btn:hover {
+    color: var(--text);
+    background: var(--surface-2);
+  }
+  #tab-methodology .subtab-btn.active {
+    color: #1a1a1a;
+    background: var(--accent);
+    font-weight: 600;
+  }
+  #tab-methodology .subtab-panel {
+    display: none;
+  }
+  #tab-methodology .subtab-panel.active {
+    display: block;
   }
   .tab-panel {
     display: none;
@@ -929,6 +970,7 @@
   <nav class="tab-nav">
     <button class="tab-btn active" data-tab="tool">Cost Advisor</button>
     <button class="tab-btn" data-tab="routing">Routing Impact</button>
+    <button class="tab-btn" data-tab="selfhost">Self-host Economics</button>
     <button class="tab-btn" data-tab="methodology">Methodology</button>
     <button class="tab-btn" data-tab="cost-opt">Cost Optimization</button>
     <button class="tab-btn" data-tab="about">About</button>
@@ -1353,7 +1395,236 @@
     </div>
   </div>
 
+  <style>
+  /* ─── Self-host Economics tab (scoped) ───────────────── */
+  #tab-selfhost input[type=range]{ -webkit-appearance:none; appearance:none; width:100%; height:4px; border-radius:3px; background:var(--border); outline:none; margin:9px 0 6px; }
+  #tab-selfhost input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; appearance:none; width:17px; height:17px; border-radius:50%; background:var(--accent); cursor:pointer; border:2px solid var(--bg); box-shadow:0 0 0 1px var(--accent); }
+  #tab-selfhost input[type=range]::-moz-range-thumb{ width:15px; height:15px; border-radius:50%; background:var(--accent); cursor:pointer; border:2px solid var(--bg); }
+  #tab-selfhost .sh-inputs{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px 18px; }
+  @media (max-width:760px){ #tab-selfhost .sh-inputs{ grid-template-columns:1fr 1fr; } }
+  #tab-selfhost .sh-readout{ display:grid; grid-template-columns:repeat(auto-fit, minmax(130px,1fr)); gap:14px; margin-top:18px; }
+  @media (max-width:760px){ #tab-selfhost .sh-readout{ grid-template-columns:1fr 1fr; } }
+  #tab-selfhost .sh-ro{ border:1px solid var(--border); border-radius:6px; padding:13px 14px; background:var(--surface-1); }
+  #tab-selfhost .sh-ro .lbl{ font-family:var(--mono); font-size:10px; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-muted); }
+  #tab-selfhost .sh-ro .val{ font-family:var(--mono); font-size:20px; color:var(--text); margin-top:6px; }
+  #tab-selfhost .sh-ro .val.accent{ color:var(--accent); }
+  #tab-selfhost .sh-tag{ display:inline-block; font-family:var(--mono); font-size:10px; font-weight:600; letter-spacing:0.04em; padding:1px 5px; margin-left:5px; border:1px solid var(--border); border-radius:4px; color:var(--text-muted); vertical-align:middle; }
+  #tab-selfhost .sh-chart-wrap{ border:1px solid var(--border); border-radius:6px; padding:16px 14px 8px; background:var(--surface-1); margin-top:20px; overflow:hidden; }
+  #tab-selfhost .sh-legend{ display:flex; gap:20px; flex-wrap:wrap; font-family:var(--mono); font-size:11px; color:var(--text-muted); margin:0 0 8px 6px; }
+  #tab-selfhost .sh-legend .sw{ display:inline-block; width:18px; height:3px; vertical-align:middle; margin-right:6px; border-radius:2px; }
+  #tab-selfhost svg .axis{ stroke:var(--border-strong); stroke-width:1; }
+  #tab-selfhost svg .grid{ stroke:var(--border); stroke-width:1; stroke-dasharray:2 4; }
+  #tab-selfhost svg text{ fill:var(--text-muted); font-family:var(--mono); font-size:10px; }
+  #tab-selfhost .sh-infeasible{ border:1px solid var(--warn); border-radius:6px; padding:16px; background:rgba(198,107,61,0.08); color:var(--text); font-family:var(--sans); font-size:14px; margin-top:18px; }
+  #tab-selfhost .sh-why{ margin-top:16px; padding:12px 14px; border-left:2px solid var(--accent); background:rgba(212,162,89,0.05); border-radius:0 6px 6px 0; font-family:var(--sans); font-size:13px; line-height:1.6; color:var(--text); }
+  #tab-selfhost .sh-why strong{ color:var(--text); }
+  #tab-selfhost .sh-why .q{ color:var(--accent); font-style:italic; }
+  /* ── methodology box ── */
+  #tab-selfhost .sh-method{ border:1px solid var(--border); border-radius:8px; padding:16px 18px; background:var(--surface-1); margin-bottom:18px; }
+  #tab-selfhost .sh-method-h{ font-family:var(--mono); font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--accent); margin-bottom:12px; }
+  #tab-selfhost .sh-method-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px 18px; }
+  @media (max-width:760px){ #tab-selfhost .sh-method-grid{ grid-template-columns:1fr; } }
+  #tab-selfhost .sh-method-grid > div{ font-family:var(--sans); font-size:13px; line-height:1.55; color:var(--text); border-left:2px solid var(--border-strong); padding-left:12px; }
+  #tab-selfhost .sh-method .k{ display:inline-block; font-family:var(--mono); font-size:10px; letter-spacing:0.06em; text-transform:uppercase; padding:2px 7px; border-radius:4px; margin-right:4px; color:#1a1a1a; font-weight:600; }
+  #tab-selfhost .sh-method-grid > div:nth-child(1) .k{ background:var(--warn); }
+  #tab-selfhost .sh-method-grid > div:nth-child(2) .k{ background:var(--accent); }
+  #tab-selfhost .sh-method-grid > div:nth-child(3) .k{ background:var(--ok); }
+  #tab-selfhost .sh-method .mono{ font-family:var(--mono); }
+  #tab-selfhost .sh-method-note{ font-family:var(--sans); font-size:13px; line-height:1.6; color:var(--text); margin:13px 0 0; }
+  #tab-selfhost .sh-method-more{ margin-top:12px; border-top:1px solid var(--border); padding-top:10px; }
+  #tab-selfhost .sh-method-more summary{ cursor:pointer; font-family:var(--mono); font-size:11px; letter-spacing:0.05em; color:var(--accent); }
+  #tab-selfhost .sh-method-body{ margin-top:10px; }
+  #tab-selfhost .sh-method-body p{ font-family:var(--sans); font-size:13px; line-height:1.6; color:var(--text); margin:0 0 10px; }
+  #tab-selfhost .sh-method-body p:last-child{ margin-bottom:0; }
+  /* ── owned-GPU assumptions ── */
+  #tab-selfhost .sh-owned{ margin-top:16px; border:1px dashed var(--border-strong); border-radius:6px; padding:14px; }
+  #tab-selfhost .sh-owned-h{ font-family:var(--mono); font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ok); margin-bottom:12px; }
+  #tab-selfhost .sh-owned-sub{ color:var(--text-muted); text-transform:none; letter-spacing:0.02em; }
+  #tab-selfhost .sh-owned-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px 18px; }
+  @media (max-width:760px){ #tab-selfhost .sh-owned-grid{ grid-template-columns:1fr 1fr; } }
+  /* ── three-way cost cells (API / Rent / Buy) ── */
+  #tab-selfhost .cost-cell .lbl{ cursor:default; }
+  #tab-selfhost .cost-cell.sh-c-api .val{ color:var(--warn); }
+  #tab-selfhost .cost-cell.sh-c-rent .val{ color:var(--accent); }
+  #tab-selfhost .cost-cell.sh-c-buy .val{ color:var(--ok); }
+  #tab-selfhost .cost-cell .sh-pill{ display:none; }
+  #tab-selfhost .cost-cell.sh-win .sh-pill{ display:inline-block; margin-left:8px; font-family:var(--mono); font-size:9px; letter-spacing:0.1em; text-transform:uppercase; padding:2px 7px; border-radius:10px; background:var(--accent); color:#1a1a1a; vertical-align:middle; font-weight:600; }
+  </style>
+
+  <div class="tab-panel" id="tab-selfhost">
+    <header style="margin-bottom:22px">
+      <h1 style="font-family:var(--serif);font-size:clamp(22px,3vw,30px);letter-spacing:-0.01em;margin:0 0 8px">Self-host Economics — the GPU break-even</h1>
+      <p class="field-hint" style="font-size:14px">Self-hosting an open-weight model is <em>not</em> a per-token price — it is fixed GPU capacity. So the real decision is a <strong>break-even volume</strong>: below it, the API is cheaper; above it, self-hosting wins. This calculator turns the advisor's self-host disclaimer into a real number. All GPU <span style="font-family:var(--mono)">$/hr</span> and throughput figures are <strong>illustrative snapshots</strong> (<span id="sh-snap-date">2026-06-14</span>) — see <span style="font-family:var(--mono)">hardware-sources.md</span>; validate on your own traffic.</p>
+    </header>
+
+    <div class="sh-method">
+      <div class="sh-method-h">How this is calculated</div>
+      <div class="sh-method-grid">
+        <div><span class="k">API</span> monthly = your token volume &times; the API&rsquo;s list <span class="mono">$/MTok</span>. Grows every time you use it.</div>
+        <div><span class="k">Rent</span> monthly = GPUs needed &times; rental <span class="mono">$/hr</span> &times; 730 hr. A fixed bill once the GPUs are on &mdash; busy or idle.</div>
+        <div><span class="k">Buy</span> monthly = GPUs needed &times; (amortized purchase + power&times;PUE + hosting) &times; 730 hr. The card&rsquo;s price spread over the useful life you set, plus power and a slot to run it in.</div>
+      </div>
+      <p class="sh-method-note"><strong>&ldquo;GPUs needed&rdquo; is the hinge.</strong> It comes from the model&rsquo;s throughput figure at your utilization ceiling and minimum-replica floor &mdash; so both the Rent and Buy columns already reflect <em>your</em> duty cycle. <strong>Owning only wins if you keep the GPU busy:</strong> idle owned hardware is sunk capital you can&rsquo;t hand back, so at low utilization renting is usually safer.</p>
+      <p class="sh-method-note">Renting vs buying only changes the <em>card payment</em>. You still need someone to drive and maintain the stack &mdash; at small scale that engineer costs more than the GPU. So treat this as a <em>cost-structure</em> tool, not a quote.</p>
+      <details class="sh-method-more">
+        <summary>What&rsquo;s included, what&rsquo;s excluded &amp; the key assumptions</summary>
+        <div class="sh-method-body">
+          <p><strong>Included:</strong> GPU capital amortized over a useful life you choose, electricity &times; a cooling/overhead factor (PUE), a flat server/colo/ops slice per GPU, and the API&rsquo;s list price for the same volume.</p>
+          <p><strong>Excluded:</strong> engineers&rsquo; time to build and run the stack, networking, storage, data egress, spot-eviction/restart overhead, and any model-quality difference. At small scale these usually dwarf the rent-vs-buy gap.</p>
+          <p><strong>Key assumptions:</strong> throughput is an illustrative snapshot at a fixed precision, batch size and sequence length; input (&ldquo;prefill&rdquo;) tokens are counted at a fraction of an output token; the input:output ratio is held fixed when solving for break-even. Rented <strong>neocloud</strong> rates sit below hyperscaler list because they are roughly amortized hardware <em>plus a thin margin</em>, with cheaper power, denser packing and more competition &mdash; an intuition, not a line in the formula.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="verdict" style="margin-bottom:18px">
+      <div class="verdict-label">Self-host configuration &middot; run an open-weight model on rented or owned GPUs</div>
+      <div class="sh-inputs" style="margin-top:16px">
+        <div class="field" style="margin:0">
+          <label for="sh-model">Open-weight model</label>
+          <select id="sh-model" aria-label="Open-weight model"></select>
+        </div>
+        <div class="field" style="margin:0">
+          <label for="sh-gpu">GPU</label>
+          <select id="sh-gpu" aria-label="GPU"></select>
+        </div>
+        <div class="field" style="margin:0">
+          <label for="sh-basis">Rental basis</label>
+          <select id="sh-basis" aria-label="Rental basis">
+            <option value="on-demand">On-demand</option>
+            <option value="spot" selected>Spot (preemptible)</option>
+            <option value="neocloud">Neocloud</option>
+          </select>
+        </div>
+        <div class="field" style="margin:0">
+          <label for="sh-vol-in">Monthly input volume</label>
+          <input type="number" id="sh-vol-in" value="100" min="0" step="1" />
+          <div class="unit">Million tokens / mo</div>
+        </div>
+        <div class="field" style="margin:0">
+          <label for="sh-vol-out">Monthly output volume</label>
+          <input type="number" id="sh-vol-out" value="20" min="0.1" step="1" />
+          <div class="unit">Million tokens / mo</div>
+        </div>
+        <div class="field" style="margin:0">
+          <label for="sh-api">Compare vs API</label>
+          <select id="sh-api" aria-label="API comparison target"></select>
+        </div>
+        <div class="field" style="margin:0">
+          <label for="sh-util">Utilization ceiling · <span id="sh-util-val" style="color:var(--accent)">70%</span></label>
+          <input type="range" id="sh-util" min="20" max="90" step="5" value="70" />
+          <div class="unit">sustained batch efficiency</div>
+        </div>
+        <div class="field" style="margin:0">
+          <label for="sh-minrep">Min replicas (HA floor)</label>
+          <input type="number" id="sh-minrep" value="1" min="1" max="8" step="1" />
+          <div class="unit">GPUs always on</div>
+        </div>
+        <div class="field" style="margin:0;display:flex;flex-direction:column;justify-content:flex-end">
+          <button class="btn primary" id="sh-export" style="width:100%">Export JSON</button>
+        </div>
+      </div>
+      <div class="sh-owned" id="sh-owned">
+        <div class="sh-owned-h">Buy / owned-GPU assumptions <span class="sh-owned-sub">&mdash; drive the &ldquo;Buy&rdquo; column &middot; illustrative defaults, edit freely &middot; price &amp; TDP auto-fill from the GPU above</span></div>
+        <div class="sh-owned-grid">
+          <div class="field" style="margin:0">
+            <label for="sh-buy-price">GPU purchase price</label>
+            <input type="number" id="sh-buy-price" value="2500" min="0" step="100" />
+            <div class="unit">USD per card</div>
+          </div>
+          <div class="field" style="margin:0">
+            <label for="sh-life">Useful life</label>
+            <input type="number" id="sh-life" value="3" min="0.5" max="8" step="0.5" />
+            <div class="unit">years to amortize the card</div>
+          </div>
+          <div class="field" style="margin:0">
+            <label for="sh-tdp">Board power (TDP)</label>
+            <input type="number" id="sh-tdp" value="72" min="0" step="5" />
+            <div class="unit">watts, before PUE</div>
+          </div>
+          <div class="field" style="margin:0">
+            <label for="sh-kwh">Electricity</label>
+            <input type="number" id="sh-kwh" value="0.12" min="0" step="0.01" />
+            <div class="unit">USD / kWh</div>
+          </div>
+          <div class="field" style="margin:0">
+            <label for="sh-pue">Cooling overhead (PUE)</label>
+            <input type="number" id="sh-pue" value="1.5" min="1" step="0.05" />
+            <div class="unit">&times; power for cooling/loss</div>
+          </div>
+          <div class="field" style="margin:0">
+            <label for="sh-hosting">Hosting / ops</label>
+            <input type="number" id="sh-hosting" value="250" min="0" step="10" />
+            <div class="unit">USD / GPU / month</div>
+          </div>
+        </div>
+      </div>
+      <div class="sh-why">
+        <span class="q">&ldquo;Why aren&rsquo;t GPT / Claude / Gemini here?&rdquo;</span> Because you can&rsquo;t self-host a model whose weights the vendor never releases &mdash; those are <strong>API-only</strong>. This tab lists <strong>open-weight</strong> models with a throughput figure behind the math &mdash; <strong>measured where we have it, otherwise a clearly-labeled illustrative estimate</strong> (interpolated by model size; see <code>hardware-sources.md</code>). Today that&rsquo;s <span id="sh-why-models">Mistral Small 4, Phi-4 mini, and Phi-4</span> &mdash; it expands as we source more.
+      </div>
+    </div>
+
+    <div id="sh-result">
+      <div class="verdict">
+        <div class="verdict-label">Headline</div>
+        <p class="verdict-because" id="sh-headline" style="font-size:19px;color:var(--text);margin-top:10px">—</p>
+        <div class="cost-grid" style="margin-top:22px">
+          <div class="cost-cell sh-c-api" id="sh-cell-api">
+            <div class="lbl">API &middot; pay-per-token<span class="sh-pill">lowest</span></div>
+            <div class="val" id="sh-api-monthly">&mdash;</div>
+            <div class="sub" id="sh-api-sub">&mdash;</div>
+          </div>
+          <div class="cost-cell sh-c-rent" id="sh-cell-rent">
+            <div class="lbl">Rent GPUs &middot; monthly<span class="sh-pill">lowest</span></div>
+            <div class="val" id="sh-rent-monthly">&mdash;</div>
+            <div class="sub" id="sh-rent-sub">&mdash;</div>
+          </div>
+          <div class="cost-cell sh-c-buy" id="sh-cell-buy">
+            <div class="lbl">Buy GPUs &middot; amortized/mo<span class="sh-pill">lowest</span></div>
+            <div class="val" id="sh-buy-monthly">&mdash;</div>
+            <div class="sub" id="sh-buy-sub">&mdash;</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sh-readout">
+        <div class="sh-ro"><div class="lbl">Rent break-even vs API</div><div class="val accent" id="sh-be-rent">&mdash;</div></div>
+        <div class="sh-ro"><div class="lbl">Buy break-even vs API</div><div class="val" id="sh-be-buy" style="color:var(--ok)">&mdash;</div></div>
+        <div class="sh-ro"><div class="lbl">GPUs needed</div><div class="val" id="sh-gpus">&mdash;</div></div>
+        <div class="sh-ro"><div class="lbl">Utilization</div><div class="val" id="sh-util-out">&mdash;</div></div>
+        <div class="sh-ro"><div class="lbl">Throughput</div><div class="val" id="sh-tput">&mdash;</div></div>
+      </div>
+
+      <div class="sh-chart-wrap">
+        <div class="sh-legend">
+          <span><span class="sw" style="background:var(--accent)"></span>Rent (fixed GPU step)</span>
+          <span><span class="sw" style="background:var(--ok)"></span>Buy &middot; owned (amortized)</span>
+          <span><span class="sw" style="background:var(--warn)"></span>API (scales with use)</span>
+          <span><span class="sw" style="background:var(--text-muted)"></span>Break-even vs API</span>
+        </div>
+        <div id="sh-chart" role="img" aria-label="Self-host vs API monthly cost break-even chart"></div>
+      </div>
+    </div>
+
+    <div class="sh-infeasible" id="sh-infeasible" style="display:none"></div>
+
+    <div class="routing-note" style="margin-top:22px;border-top:1px solid var(--border);padding-top:14px">
+      <strong>Always:</strong> GPU <span style="font-family:var(--mono)">$/hr</span> and tok/s are <strong>illustrative snapshots</strong> (cited in <span style="font-family:var(--mono)">hardware-sources.md</span>), not quotes · <strong>spot = preemptible</strong> (eviction/restart overhead not modeled) · throughput varies with precision / batch / sequence length — <strong>validate on your own traffic</strong> · break-even holds the input:output ratio fixed · this models a <em>cost structure</em>, not a guarantee, and ignores ops/networking/storage and engineering time.
+    </div>
+  </div>
+
   <div class="tab-panel" id="tab-methodology">
+    <div class="content-section" style="margin-bottom:22px">
+      <h3>Methodology &mdash; three independent calculators</h3>
+      <p>This prototype contains <strong>three separate engines</strong>, each with its own model, inputs, and assumptions. They do not share state &mdash; the Cost Advisor&rsquo;s validated rule tree is never altered by the other two. Pick a methodology below.</p>
+    </div>
+
+    <nav class="subtab-nav" id="meth-subnav" role="tablist" aria-label="Methodology sections">
+      <button class="subtab-btn active" data-subtab="meth-advisor" role="tab">Cost Advisor</button>
+      <button class="subtab-btn" data-subtab="meth-routing" role="tab">Routing Impact</button>
+      <button class="subtab-btn" data-subtab="meth-selfhost" role="tab">Self-host Economics</button>
+    </nav>
+
+    <div class="subtab-panel active" id="meth-advisor">
     <div class="content-section">
       <h3>How the Decision Engine Works</h3>
       <p>The engine walks a <strong>deterministic six-rule tree</strong> in fixed order. Same inputs always produce the same outputs and the same trace. The philosophy is: <strong>cheapest viable</strong>, where viability is enforced by tier filters and compliance gates — not by judgment.</p>
@@ -1392,7 +1663,7 @@
         <li><strong>None</strong> — all providers eligible, no premium</li>
         <li><strong>US residency</strong> — filter to US/global providers, +10% premium</li>
         <li><strong>EU residency</strong> — filter to EU-eligible providers only</li>
-        <li><strong>Self-host</strong> — filter to open-weight models only (currently Mistral Small 4, Phi-4 mini, Phi-4)</li>
+        <li><strong>Self-host</strong> — filter the advisor's routing candidates to open-weight models only (Mistral Small 4, Phi-4 mini, Phi-4). The separate Self-host Economics tab models a broader what-if catalog — Llama, Qwen and Gemma too — that is not part of advisor routing.</li>
       </ul>
       <p>If compliance leaves an empty candidate set, the engine returns an error rather than silently relaxing constraints.</p>
 
@@ -1483,6 +1754,110 @@
         </tbody>
       </table>
     </div>
+      </div><!-- /#meth-advisor -->
+
+      <div class="subtab-panel" id="meth-routing">
+        <div class="content-section">
+          <h3>What the Routing Impact tab models</h3>
+          <p>The Routing tab answers a different question from the Cost Advisor: not <em>which single model</em> to run, but <em>how much a routing layer cuts the bill</em> when one workload is split across difficulty tiers instead of sent entirely to a frontier model. It reuses the same <strong>16-model catalog read-only</strong> and <strong>isolates routing &mdash; list price only, with no caching, batching, or reasoning-effort levers</strong> &mdash; so any saving shown is attributable to routing alone, never stacked with other optimizations. Inputs: monthly input/output volume and a difficulty mix (easy / intermediate / difficult, which auto-fills to 100%).</p>
+        </div>
+
+        <div class="content-section">
+          <h3>The three routing layers</h3>
+
+          <h4>1 &mdash; Native (in-cloud) routing</h4>
+          <p>Each hyperscaler&rsquo;s own managed router, measured against that cloud&rsquo;s own frontier model:</p>
+          <ul>
+            <li><strong>AWS Bedrock</strong> &mdash; Intelligent Prompt Routing, <strong>in-family only</strong>, $1.00 / 1,000 requests, vendor claim &ldquo;up to 30%&rdquo;. Uses the Claude ladder Haiku 4.5 &rarr; Sonnet 4.6 &rarr; Opus 4.8.</li>
+            <li><strong>Azure AI Foundry</strong> &mdash; Model Router, <strong>cross-family within Azure</strong>, ~$0.14 / 1M input tokens, no headline savings figure. Uses GPT-5.4 nano &rarr; GPT-5.4 &rarr; GPT-5.5.</li>
+          </ul>
+
+          <h4>2 &mdash; Cross-provider gateway</h4>
+          <p>One configurable gateway that can route each tier to <em>any</em> model in the catalog, across vendors, under <strong>four fee models</strong>: percentage markup on routed spend, zero-markup BYOK, flat subscription, or self-host. The per-tier model is a <strong>user choice</strong> &mdash; the gateway classifies how hard each request is, but the human sets which model serves each tier; it does not auto-pick the cheapest.</p>
+
+          <h4>3 &mdash; Specialist recommender</h4>
+          <p>A per-request model picker that sits <em>behind</em> the gateway, modeled as an overlay on the gateway&rsquo;s already-routed bill (a Not Diamond-style fee: ~$10 / 10,000 recommendations, first 10,000 free). Its break-even is measured against the <strong>gateway&rsquo;s own free routing</strong>, never the do-nothing frontier baseline, to avoid double-counting the gateway&rsquo;s savings.</p>
+        </div>
+
+        <div class="content-section">
+          <h3>The comparison &amp; its baselines</h3>
+          <p>A closing <strong>&ldquo;one workload, every layer&rdquo;</strong> table compares all of the above on a single workload. <strong>Net $/mo is the comparable figure.</strong> The percentages are each layer measured <em>against its own baseline</em> and are <strong>not comparable across rows</strong> &mdash; Bedrock&rsquo;s % is versus the Claude frontier, Foundry&rsquo;s is versus the GPT frontier, and the specialist&rsquo;s is versus the gateway.</p>
+        </div>
+
+        <div class="content-section">
+          <h3>Key assumptions &amp; caveats</h3>
+          <ul>
+            <li><strong>Equal tokens-per-request across tiers.</strong> Harder tasks usually emit more output, so a flat token count per tier likely <em>overstates</em> routing savings.</li>
+            <li><strong>Each cheap tier is assumed quality-acceptable</strong> for its slice of traffic &mdash; a judgment you must validate on real traffic.</li>
+            <li><strong>List price only.</strong> No caching, batch, or effort levers &mdash; those belong to the Cost Advisor and would stack on top of routing.</li>
+            <li><strong>Google Cloud is deferred</strong> from v0.1 pending a verified Gemini Flash/Pro price snapshot. This is a data gap, not a capability gap &mdash; Vertex AI Model Optimizer is a managed, Gemini-scoped router, held back only because its tier models aren&rsquo;t yet in the verified catalog.</li>
+          </ul>
+        </div>
+      </div><!-- /#meth-routing -->
+
+      <div class="subtab-panel" id="meth-selfhost">
+        <div class="content-section">
+          <h3>What the Self-host Economics tab models</h3>
+          <p>Self-hosting an open-weight model is not a per-token price &mdash; it is <strong>fixed GPU capacity</strong>. This tab answers: at what monthly volume does running your own GPUs beat paying the API, and is it cheaper to <strong>rent</strong> or <strong>buy</strong> those cards? It is a fully <strong>independent</strong> engine (<code>selfHostCost()</code> for rent, <code>ownedHourly()</code> for buy) &mdash; it does not touch the Cost Advisor or its validation set. It scopes <strong>8 open-weight models</strong> (the 3 self-hostable advisor models plus 5 community models in a separate <code>SELFHOST_EXTRA</code> list) across <strong>4 GPUs</strong> (L4, A10G, A100-80GB, H100-80GB).</p>
+        </div>
+
+        <div class="content-section">
+          <h3>The three cost lines</h3>
+          <table>
+            <thead><tr><th>Line</th><th>Monthly formula</th><th>Behaviour</th></tr></thead>
+            <tbody>
+              <tr><td><strong>API</strong></td><td><code>vol_out &times; list $/MTok</code></td><td>Linear &mdash; grows every time you use it.</td></tr>
+              <tr><td><strong>Rent</strong></td><td><code>gpus_needed &times; rental $/hr &times; 730</code></td><td>Fixed once the GPUs are on &mdash; busy or idle.</td></tr>
+              <tr><td><strong>Buy</strong></td><td><code>gpus_needed &times; owned $/hr &times; 730</code></td><td>Fixed; owned $/hr is amortized (below).</td></tr>
+            </tbody>
+          </table>
+          <p>730 = average hours per month. The cheapest of the three is highlighted, with a break-even output volume for each of Rent and Buy versus the API.</p>
+        </div>
+
+        <div class="content-section">
+          <h3>Capacity &mdash; how &ldquo;GPUs needed&rdquo; is derived</h3>
+          <p>&ldquo;GPUs needed&rdquo; is the hinge that drives both Rent and Buy. It comes from the model&rsquo;s <strong>throughput</strong> at your <strong>utilization ceiling</strong> and <strong>minimum-replica (HA) floor</strong>:</p>
+          <p><code>replicas = max(min_replicas, ceil(output-equivalent load &divide; per-replica capacity))</code><br>
+             <code>gpus_needed = replicas &times; gpus_per_replica</code></p>
+          <ul>
+            <li><strong>VRAM feasibility.</strong> A model only appears on a GPU it actually fits; oversized pairs (e.g. a 32B or 70B on a 24 GB L4) are reported <strong>infeasible</strong> rather than silently mispriced.</li>
+            <li><strong>Tensor parallelism (TP&times;2).</strong> <strong>Llama 3.3 70B</strong> carries <code>gpus_per_replica: 2</code> &mdash; a single 80 GB card leaves almost no KV-cache room, so it is provisioned across two cards. Its GPU count and cost double accordingly (shown as a <code>TP&times;2</code> badge). Every other model defaults to 1 card/replica, so this changes nothing for them.</li>
+            <li><strong>Prefill.</strong> Input (&ldquo;prefill&rdquo;) tokens are counted at a fraction of an output token (<code>prefill_factor</code>) and folded into the output-equivalent load.</li>
+          </ul>
+        </div>
+
+        <div class="content-section">
+          <h3>Buy &mdash; owned $/hr amortization</h3>
+          <p>The Buy line swaps the rental rate for an amortized owned rate (<code>ownedHourly()</code>), the sum of three terms:</p>
+          <p><code>owned $/hr = purchase &divide; (life_years &times; 8766) + (TDP &divide; 1000) &times; $/kWh &times; PUE + hosting_per_month &divide; 730</code></p>
+          <ul>
+            <li><strong>Card</strong> &mdash; purchase price spread over a useful life you set (8766 = hours/year).</li>
+            <li><strong>Power</strong> &mdash; board TDP &times; electricity price &times; a cooling/overhead factor (PUE).</li>
+            <li><strong>Hosting</strong> &mdash; a flat server/colo/ops slice per GPU.</li>
+          </ul>
+          <p>Owned cost is <strong>fixed regardless of utilization</strong> &mdash; you pay full amortization whether the card is busy or idle. That is exactly the sunk-capital property that makes ownership unforgiving at low duty cycle.</p>
+        </div>
+
+        <div class="content-section">
+          <h3>Break-even &mdash; step function vs linear</h3>
+          <p>The core insight: <strong>self-host is a step function, the API is linear.</strong> So the honest output is a break-even, not a flat rate. Below break-even the API wins (the GPU sits idle); above it self-hosting wins &mdash; and <strong>owning only beats renting if you keep the GPU busy</strong>, since idle owned hardware is sunk capital you can&rsquo;t hand back. An inline chart plots all three lines with both break-even points.</p>
+        </div>
+
+        <div class="content-section">
+          <h3>Provenance &amp; honesty</h3>
+          <ul>
+            <li><strong>Measured vs estimated.</strong> Every throughput row carries a <code>source</code> tag. The three Phi-4/Mistral anchors are <code>measured</code> (representative of published vLLM throughput); the five community additions are <code>est</code> (illustrative, interpolated from the anchors by parameter count and GPU class). The picker and the Throughput readout show an <code>est.</code> badge so you can tell which is which per-model.</li>
+            <li><strong>Included:</strong> GPU capital amortized over its life, electricity &times; PUE, a flat hosting slice per GPU, and the API&rsquo;s list price for the same volume.</li>
+            <li><strong>Excluded:</strong> engineers&rsquo; time to build and run the stack, networking, storage, data egress, spot-eviction/restart overhead, and any model-quality difference. At small scale these usually dwarf the rent-vs-buy gap.</li>
+            <li><strong>Snapshots, not a feed.</strong> Every GPU $/hr, purchase price, and tok/s is an illustrative snapshot sourced in <code>hardware-sources.md</code>; re-verify before any external use.</li>
+          </ul>
+        </div>
+
+        <div class="content-section">
+          <h3>Validation</h3>
+          <p><code>selfHostCost()</code> and <code>ownedHourly()</code> are pure and deterministic (same inputs &rarr; same output). The tab ships its own invariant harness, <code>tests/selfhost.run.js</code> (<strong>43 assertions</strong>: rent capacity/break-even, owned amortization, the open-weight catalog, measured/est provenance tags, and 70B TP&times;2 provisioning), kept fully separate from the advisor&rsquo;s <code>tests/run.js</code> (<strong>11/11</strong>), which stays the regression guard.</p>
+        </div>
+      </div><!-- /#meth-selfhost -->
   </div>
 
   <div class="tab-panel" id="tab-cost-opt">
@@ -1501,7 +1876,7 @@
           <tr><td>7</td><td>Implement model cascade (cheap → expensive)</td><td>60–80%</td><td>High</td></tr>
           <tr><td>8</td><td>PTU/Reserved for steady-state (Microsoft)</td><td>20–40% vs on-demand</td><td>Medium</td></tr>
           <tr><td>9</td><td>Compaction for long conversations (Claude)</td><td>40–60%</td><td>Low</td></tr>
-          <tr><td>10</td><td>Self-host open-weight models (Mistral, Phi-4)</td><td>50–90% at scale</td><td>High</td></tr>
+          <tr><td>10</td><td>Self-host open-weight models (Llama, Qwen, Mistral, Phi, Gemma)</td><td>50–90% at scale</td><td>High</td></tr>
         </tbody>
       </table>
     </div>
@@ -1806,6 +2181,17 @@
           </div>
 
     <div class="content-section">
+      <h3>Scope, Model &amp; GPU Selection &mdash; Self-host Economics</h3>
+      <p>The Self-host Economics tab answers the question the Cost Advisor's self-host filter leaves open: self-hosting an open-weight model is not a per-token price &mdash; it is <strong>fixed GPU capacity</strong>, so at what monthly volume does running your own GPUs beat paying the API, and is it cheaper to <strong>rent</strong> or <strong>buy</strong> those cards? It scopes three axes:</p>
+      <ul>
+        <li><strong>Models &mdash; 8 open-weight</strong>: the three self-hostable advisor models (Phi-4 mini, Phi-4, Mistral Small 4) plus five popular community additions (Llama 3.1 8B, Qwen2.5 7B, Gemma 2 9B, Qwen2.5 32B, Llama 3.3 70B). The five live in a separate <code>SELFHOST_EXTRA</code> list, <strong>not</strong> the advisor's <code>MODELS</code> catalog &mdash; so the Cost Advisor still runs its validated 16-model set unchanged and this tab never alters a routing recommendation.</li>
+        <li><strong>GPUs &mdash; 4 cards</strong>: NVIDIA L4, A10G, A100-80GB, H100-80GB. A model only appears on a GPU it actually fits in VRAM; oversized pairs (e.g. a 32B or 70B on a 24 GB L4) are reported infeasible rather than silently mispriced.</li>
+        <li><strong>Rent vs Buy</strong>: <em>Rent</em> uses on-demand / spot / neocloud $/hr; <em>Buy</em> amortizes a card's purchase price over a useful life and adds power (TDP &times; $/kWh &times; PUE) and flat hosting. The tab shows <strong>API, Rent, and Buy</strong> side by side, with a break-even output volume for each versus the API.</li>
+      </ul>
+      <p>The core insight it makes visible: <strong>self-host is a step function, the API is linear</strong> &mdash; so the honest output is a break-even, not a flat rate. Below break-even the API wins (the GPU sits idle); above it self-hosting wins &mdash; and <strong>owning only beats renting if you keep the GPU busy</strong>, since idle owned hardware is sunk capital. Every throughput figure carries a <strong>measured-vs-estimated</strong> provenance tag (the three anchor models are representative of published vLLM throughput; the five additions are interpolated, shown with an <code>est.</code> badge), and <strong>Llama 3.3 70B is provisioned tensor-parallel across two cards (TP&times;2)</strong> so its economics are not single-card optimistic. GPU $/hr, purchase prices, and tok/s are all <strong>illustrative snapshots</strong> sourced in <code>hardware-sources.md</code>; engineering time, networking, storage, and spot-eviction recovery are out of scope. Validate on your own traffic.</p>
+    </div>
+
+    <div class="content-section">
       <h3>Disclaimer</h3>
       <div class="disclaimer-box">
         <span class="disc-label">⚠ Important</span>
@@ -1897,6 +2283,164 @@ const MODELS = [
 ];
 
 const BASELINE_ID = 'gpt-5.5';
+
+/* ─── Self-host economics (Track A) ──────────────────────────────
+   Real GPU-capacity cost for open-weight models. SNAPSHOT data:
+   GPU $/hr from the SkyPilot catalog + provider pages; throughput
+   from vLLM benchmarks. All figures are ILLUSTRATIVE — see
+   hardware-sources.md. Spot = preemptible. Validate on your traffic. */
+const SELFHOST_SNAPSHOT_DATE = '2026-06-14';
+
+const HARDWARE = [
+  { id: 'l4',        gpu: 'NVIDIA L4',        vram_gb: 24, buy_usd: 2500,  tdp_w: 72,  prices: [
+      { cloud: 'GCP',    basis: 'on-demand', usd_hr: 0.71 },
+      { cloud: 'GCP',    basis: 'spot',      usd_hr: 0.21 },
+      { cloud: 'RunPod', basis: 'neocloud',  usd_hr: 0.44 } ] },
+  { id: 'a10g',      gpu: 'NVIDIA A10G',      vram_gb: 24, buy_usd: 3000,  tdp_w: 150, prices: [
+      { cloud: 'AWS g5', basis: 'on-demand', usd_hr: 1.01 },
+      { cloud: 'AWS g5', basis: 'spot',      usd_hr: 0.35 },
+      { cloud: 'RunPod', basis: 'neocloud',  usd_hr: 0.75 } ] },
+  { id: 'a100-80gb', gpu: 'NVIDIA A100 80GB', vram_gb: 80, buy_usd: 17000, tdp_w: 300, prices: [
+      { cloud: 'AWS/GCP', basis: 'on-demand', usd_hr: 3.43 },
+      { cloud: 'GCP',     basis: 'spot',      usd_hr: 1.57 },
+      { cloud: 'RunPod',  basis: 'neocloud',  usd_hr: 1.19 } ] },
+  { id: 'h100-80gb', gpu: 'NVIDIA H100 80GB', vram_gb: 80, buy_usd: 28000, tdp_w: 350, prices: [
+      { cloud: 'AWS p5', basis: 'on-demand', usd_hr: 6.88 },
+      { cloud: 'AWS p5', basis: 'spot',      usd_hr: 2.50 },
+      { cloud: 'Lambda', basis: 'neocloud',  usd_hr: 2.49 } ] },
+];
+
+// Output tokens/sec under vLLM. prefill_factor: input (prefill) tok/s ≈ out_tok_s × prefill_factor.
+// Only VRAM-feasible (model, GPU) pairs are listed; absence of a pair ⇒ infeasible.
+const THROUGHPUT = [
+  { model_id: 'phi-4-mini', gpu_id: 'l4',        precision: 'fp16', out_tok_s: 2500, prefill_factor: 8, source: 'measured', assumptions: 'batch≥32, ~1K in / 256 out' },
+  { model_id: 'phi-4-mini', gpu_id: 'a10g',      precision: 'fp16', out_tok_s: 2400, prefill_factor: 8, source: 'measured', assumptions: 'batch≥32, ~1K in / 256 out' },
+  { model_id: 'phi-4-mini', gpu_id: 'a100-80gb', precision: 'fp16', out_tok_s: 7000, prefill_factor: 8, source: 'measured', assumptions: 'batch≥32, ~1K in / 256 out' },
+  { model_id: 'phi-4-mini', gpu_id: 'h100-80gb', precision: 'fp16', out_tok_s: 9000, prefill_factor: 8, source: 'measured', assumptions: 'batch≥32, ~1K in / 256 out' },
+  { model_id: 'phi-4',      gpu_id: 'l4',        precision: 'fp8',  out_tok_s: 900,  prefill_factor: 8, source: 'measured', assumptions: 'FP8 to fit 24GB; batch≥32' },
+  { model_id: 'phi-4',      gpu_id: 'a10g',      precision: 'fp8',  out_tok_s: 850,  prefill_factor: 8, source: 'measured', assumptions: 'FP8 to fit 24GB; batch≥32' },
+  { model_id: 'phi-4',      gpu_id: 'a100-80gb', precision: 'fp16', out_tok_s: 2750, prefill_factor: 8, source: 'measured', assumptions: 'batch≥32, ~1K in / 256 out' },
+  { model_id: 'phi-4',      gpu_id: 'h100-80gb', precision: 'fp16', out_tok_s: 3600, prefill_factor: 8, source: 'measured', assumptions: 'batch≥32, ~1K in / 256 out' },
+  { model_id: 'mistral-small-4', gpu_id: 'a100-80gb', precision: 'fp16', out_tok_s: 2000, prefill_factor: 8, source: 'measured', assumptions: 'batch≥32, ~1K in / 256 out' },
+  { model_id: 'mistral-small-4', gpu_id: 'h100-80gb', precision: 'fp16', out_tok_s: 2550, prefill_factor: 8, source: 'measured', assumptions: 'batch≥32, ~1K in / 256 out' },
+  // — Open-weight additions (Track A.3) · source:'est' = illustrative, interpolated from the phi-4/mistral anchors by param count + GPU class (NOT benchmarked) —
+  { model_id: 'llama-3.1-8b',  gpu_id: 'l4',        precision: 'fp16', out_tok_s: 1400, prefill_factor: 8, source: 'est', assumptions: 'batch≥32, ~1K in / 256 out' },
+  { model_id: 'llama-3.1-8b',  gpu_id: 'a10g',      precision: 'fp16', out_tok_s: 1300, prefill_factor: 8, source: 'est', assumptions: 'batch≥32, ~1K in / 256 out' },
+  { model_id: 'llama-3.1-8b',  gpu_id: 'a100-80gb', precision: 'fp16', out_tok_s: 4200, prefill_factor: 8, source: 'est', assumptions: 'batch≥32, ~1K in / 256 out' },
+  { model_id: 'llama-3.1-8b',  gpu_id: 'h100-80gb', precision: 'fp16', out_tok_s: 5400, prefill_factor: 8, source: 'est', assumptions: 'batch≥32, ~1K in / 256 out' },
+  { model_id: 'qwen2.5-7b',    gpu_id: 'l4',        precision: 'fp16', out_tok_s: 1500, prefill_factor: 8, source: 'est', assumptions: 'batch≥32, ~1K in / 256 out' },
+  { model_id: 'qwen2.5-7b',    gpu_id: 'a10g',      precision: 'fp16', out_tok_s: 1400, prefill_factor: 8, source: 'est', assumptions: 'batch≥32, ~1K in / 256 out' },
+  { model_id: 'qwen2.5-7b',    gpu_id: 'a100-80gb', precision: 'fp16', out_tok_s: 4500, prefill_factor: 8, source: 'est', assumptions: 'batch≥32, ~1K in / 256 out' },
+  { model_id: 'qwen2.5-7b',    gpu_id: 'h100-80gb', precision: 'fp16', out_tok_s: 5800, prefill_factor: 8, source: 'est', assumptions: 'batch≥32, ~1K in / 256 out' },
+  { model_id: 'gemma-2-9b',    gpu_id: 'l4',        precision: 'fp16', out_tok_s: 1200, prefill_factor: 8, source: 'est', assumptions: 'fp16 ~18GB; batch≥16 on 24GB cards' },
+  { model_id: 'gemma-2-9b',    gpu_id: 'a10g',      precision: 'fp16', out_tok_s: 1100, prefill_factor: 8, source: 'est', assumptions: 'fp16 ~18GB; batch≥16 on 24GB cards' },
+  { model_id: 'gemma-2-9b',    gpu_id: 'a100-80gb', precision: 'fp16', out_tok_s: 3800, prefill_factor: 8, source: 'est', assumptions: 'batch≥32, ~1K in / 256 out' },
+  { model_id: 'gemma-2-9b',    gpu_id: 'h100-80gb', precision: 'fp16', out_tok_s: 4900, prefill_factor: 8, source: 'est', assumptions: 'batch≥32, ~1K in / 256 out' },
+  { model_id: 'qwen2.5-32b',   gpu_id: 'a100-80gb', precision: 'fp8',  out_tok_s: 1500, prefill_factor: 8, source: 'est', assumptions: 'FP8 ~32GB to leave KV room; batch≥16' },
+  { model_id: 'qwen2.5-32b',   gpu_id: 'h100-80gb', precision: 'fp8',  out_tok_s: 1950, prefill_factor: 8, source: 'est', assumptions: 'FP8 ~32GB to leave KV room; batch≥16' },
+  { model_id: 'llama-3.3-70b', gpu_id: 'a100-80gb', precision: 'fp8',  out_tok_s: 700,  prefill_factor: 8, source: 'est', gpus_per_replica: 2, assumptions: 'FP8 ~70GB; modeled as TP×2 — 2 cards/replica (single-card is impractically tight)' },
+  { model_id: 'llama-3.3-70b', gpu_id: 'h100-80gb', precision: 'fp8',  out_tok_s: 1100, prefill_factor: 8, source: 'est', gpus_per_replica: 2, assumptions: 'FP8 ~70GB; modeled as TP×2 — 2 cards/replica (single-card is impractically tight)' },
+];
+
+/* Open-weight models for the Self-host tab ONLY (deliberately NOT advisor candidates —
+   keeps the Cost Advisor's validated catalog + 11/11 recommendations untouched). Same
+   shape as MODELS; input/output are ILLUSTRATIVE serverless reference prices (Together AI
+   size-tier list price, 2026-06-14 snapshot) used purely as the "rent the same model from
+   an API" break-even baseline. Serverless prices vary widely by provider/tier — verify
+   current. See pricing-sources.md (Open-weight serverless) + hardware-sources.md. */
+const SELFHOST_EXTRA = [
+  { id: 'llama-3.1-8b',  provider: 'Meta',    name: 'Llama 3.1 8B',  tier: 1, input: 0.20, output: 0.20, cached_input: null, batch: false, cache: false, effort: false, residency: ['global','us','eu'], selfhost: true, note: 'open-weight (Llama 3.1 Community) · 8B params · 128K ctx' },
+  { id: 'qwen2.5-7b',    provider: 'Alibaba', name: 'Qwen2.5 7B',    tier: 1, input: 0.20, output: 0.20, cached_input: null, batch: false, cache: false, effort: false, residency: ['global','us','eu'], selfhost: true, note: 'open-weight (Apache 2.0) · 7B params · 128K ctx' },
+  { id: 'gemma-2-9b',    provider: 'Google',  name: 'Gemma 2 9B',    tier: 1, input: 0.30, output: 0.30, cached_input: null, batch: false, cache: false, effort: false, residency: ['global','us','eu'], selfhost: true, note: 'open-weight (Gemma license) · 9B params · 8K ctx' },
+  { id: 'qwen2.5-32b',   provider: 'Alibaba', name: 'Qwen2.5 32B',   tier: 2, input: 0.80, output: 0.80, cached_input: null, batch: false, cache: false, effort: false, residency: ['global','us','eu'], selfhost: true, note: 'open-weight (Apache 2.0) · 32B params · 128K ctx' },
+  { id: 'llama-3.3-70b', provider: 'Meta',    name: 'Llama 3.3 70B', tier: 3, input: 0.90, output: 0.90, cached_input: null, batch: false, cache: false, effort: false, residency: ['global','us','eu'], selfhost: true, note: 'open-weight (Llama 3.3 Community) · 70B params · 128K ctx' },
+];
+
+/* Pure, deterministic self-host cost model.
+   model: a MODELS entry (must be selfhost:true) · hw: a HARDWARE entry
+   basis: 'on-demand' | 'spot' | 'neocloud' · volIn_M/volOut_M: monthly MTok
+   opts:  { utilCeiling=0.7, minReplicas=1, hoursPerMonth=730, includePrefill=true, apiRef=null } */
+function selfHostCost(model, hw, basis, volIn_M, volOut_M, opts) {
+  opts = Object.assign({ utilCeiling: 0.7, minReplicas: 1, hoursPerMonth: 730, includePrefill: true, apiRef: null, overrideUsdHr: null, ownedLabel: 'owned' }, opts || {});
+  const round = (x, d) => { if (!isFinite(x)) return x; const f = Math.pow(10, d); return Math.round(x * f) / f; };
+
+  if (!model || !hw) return { feasible: false, reason: 'missing model or hardware' };
+  if (model.selfhost !== true) return { feasible: false, reason: model.name + ' is not open-weight / self-hostable' };
+  const tp = THROUGHPUT.find(t => t.model_id === model.id && t.gpu_id === hw.id);
+  if (!tp) return { feasible: false, reason: model.name + ' does not fit (VRAM) or has no benchmark on ' + hw.gpu };
+  let usdHr, cloud;
+  if (opts.overrideUsdHr != null && isFinite(opts.overrideUsdHr) && opts.overrideUsdHr > 0) {
+    usdHr = opts.overrideUsdHr;            // owned / amortized effective $/hr (see ownedHourly)
+    cloud = opts.ownedLabel || 'owned';
+  } else {
+    const priceObj = hw.prices.find(p => p.basis === basis);
+    if (!priceObj) return { feasible: false, reason: 'no ' + basis + ' price for ' + hw.gpu };
+    usdHr = priceObj.usd_hr;
+    cloud = priceObj.cloud;
+  }
+  const hours = opts.hoursPerMonth;
+  const util  = opts.utilCeiling;
+  const gpr = Math.max(1, Math.floor(tp.gpus_per_replica || 1));            // GPUs per replica (tensor-parallel degree)
+  const capacityPerReplicaMonth = tp.out_tok_s * 3600 * hours * util;       // output tokens / replica / month
+  const usePrefill = opts.includePrefill && tp.prefill_factor > 0;
+
+  const outEquivVol = (volOut_M * 1e6) + (usePrefill ? (volIn_M * 1e6) / tp.prefill_factor : 0);
+  const replicasNeeded = Math.max(opts.minReplicas, Math.ceil(outEquivVol / capacityPerReplicaMonth));
+  const gpusNeeded  = replicasNeeded * gpr;                                 // each replica costs gpr GPUs
+  const monthly     = gpusNeeded * usdHr * hours;
+  const perMTokOut  = volOut_M > 0 ? monthly / volOut_M : Infinity;
+  const utilization = replicasNeeded > 0 ? outEquivVol / (replicasNeeded * capacityPerReplicaMonth) : 0;
+  const floorPerMTokOut = (usdHr * gpr / (tp.out_tok_s * 3600 * util)) * 1e6;
+
+  // Break-even vs an API reference (defaults to the model's own list price), holding the in:out ratio.
+  const apiM  = opts.apiRef || model;
+  const ratio = (volIn_M > 0 && volOut_M > 0) ? volIn_M / volOut_M : 0;
+  const apiMonthly = vOut => apiM.input * (vOut * ratio) + apiM.output * vOut;
+  const shMonthly  = vOut => {
+    const oev = (vOut * 1e6) + (usePrefill ? (vOut * ratio * 1e6) / tp.prefill_factor : 0);
+    return Math.max(opts.minReplicas, Math.ceil(oev / capacityPerReplicaMonth)) * gpr * usdHr * hours;
+  };
+  let breakeven = null;
+  for (let v = 0.01; v <= 1e6; v *= 1.1) {
+    if (shMonthly(v) <= apiMonthly(v)) { breakeven = v; break; }
+  }
+
+  return {
+    feasible: true,
+    model_id: model.id, gpu_id: hw.id, gpu: hw.gpu, vram_gb: hw.vram_gb,
+    price_basis: basis, cloud: cloud, usd_hr: usdHr,
+    precision: tp.precision, out_tok_s: tp.out_tok_s, throughput_source: tp.source || 'measured',
+    gpus_needed: gpusNeeded, gpus_per_replica: gpr,
+    utilization: round(utilization, 4),
+    monthly: round(monthly, 2),
+    per_mtok_out: volOut_M > 0 ? round(perMTokOut, 4) : null,
+    floor_per_mtok_out: round(floorPerMTokOut, 4),
+    breakeven_vs: apiM.id,
+    breakeven_volout_mtok: breakeven == null ? null : round(breakeven, 3),
+    snapshot_date: SELFHOST_SNAPSHOT_DATE,
+  };
+}
+
+/* Effective $/hr to OWN a GPU = amortized purchase + power + hosting/ops.
+   hw supplies buy_usd & tdp_w; any field overridable. Defaults illustrative
+   (see hardware-sources.md). Feed .usd_hr into selfHostCost via opts.overrideUsdHr. */
+function ownedHourly(hw, o) {
+  o = Object.assign({ lifeYears: 3, usdPerKwh: 0.12, pue: 1.5, hostingPerMonth: 250 }, o || {});
+  if (!hw) return null;
+  const purchase = (o.purchaseUsd != null) ? o.purchaseUsd : hw.buy_usd;
+  const tdp = (o.tdpW != null) ? o.tdpW : hw.tdp_w;
+  if (!(purchase > 0) || !(o.lifeYears > 0)) return null;
+  const HOURS_PER_YEAR = 8766;                                   // 365.25 × 24
+  const cardPerHr  = purchase / (o.lifeYears * HOURS_PER_YEAR);  // amortized capital
+  const powerPerHr = ((tdp || 0) / 1000) * o.usdPerKwh * o.pue;  // power × cooling overhead
+  const hostPerHr  = (o.hostingPerMonth || 0) / 730;             // server/rack/colo/ops slice
+  return {
+    usd_hr: cardPerHr + powerPerHr + hostPerHr,
+    card_per_hr: cardPerHr, power_per_hr: powerPerHr, hosting_per_hr: hostPerHr,
+    purchase_usd: purchase, tdp_w: tdp, life_years: o.lifeYears,
+    usd_per_kwh: o.usdPerKwh, pue: o.pue, hosting_per_month: o.hostingPerMonth
+  };
+}
 
 /* shared formatter used by both decide() and renderResult() */
 function fmtInline(n) {
@@ -2115,7 +2659,7 @@ function decide(inputs) {
   if (inputs.compliance === 'selfhost' && winner.model.selfhost) {
     levers.push({
       name: 'Self-host accounting',
-      desc: 'Displayed cost is the per-token-equivalent for comparison. Actual self-host cost is fixed compute (GPU $/hr) — typically attractive above sustained ≈$1–5K/mo API spend; model against your traffic.',
+      desc: 'Displayed cost is the per-token-equivalent for comparison. Actual self-host cost is fixed compute (GPU $/hr) — typically attractive above sustained ≈$1–5K/mo API spend; model against your traffic. See the real GPU break-even in the Self-host Economics tab.',
       impact: 'see infra',
       kind: 'note',
     });
@@ -2371,6 +2915,17 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+/* ─── Methodology sub-tabs (scoped to #tab-methodology, independent of main tabs) ─── */
+document.querySelectorAll('#tab-methodology .subtab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#tab-methodology .subtab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#tab-methodology .subtab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    var target = document.getElementById(btn.dataset.subtab);
+    if (target) target.classList.add('active');
   });
 });
 
@@ -2706,6 +3261,392 @@ recompute();
     console.log('[routing self-test] ' + (ok ? 'PASS' : 'FAIL'));
   } catch (e) { console.log('[routing self-test] ERROR ' + e.message); }
 
+  recompute();
+})();
+</script>
+
+<!-- ── Self-host Economics · script block · reads MODELS/HARDWARE/THROUGHPUT + selfHostCost read-only · advisor engine untouched ── -->
+<script>
+(function () {
+  'use strict';
+  if (typeof MODELS === 'undefined' || typeof HARDWARE === 'undefined' ||
+      typeof THROUGHPUT === 'undefined' || typeof selfHostCost !== 'function' ||
+      typeof ownedHourly !== 'function') return;
+  var panel = document.getElementById('tab-selfhost');
+  if (!panel) return;
+  function $(id) { return document.getElementById(id); }
+
+  var HOURS = 730;
+  var lastExport = null;
+
+  function money(n) {
+    if (n == null || !isFinite(n)) return '\u2014';
+    var a = Math.abs(n);
+    if (a >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
+    if (a >= 1000) return '$' + Math.round(n).toLocaleString('en-US');
+    if (a >= 100) return '$' + n.toFixed(0);
+    if (a >= 1) return '$' + n.toFixed(2);
+    return '$' + n.toFixed(2);
+  }
+  function moneyTick(n) {
+    if (n == null || !isFinite(n)) return '';
+    var a = Math.abs(n);
+    if (a >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'M';
+    if (a >= 1000) return '$' + (n / 1000).toFixed(a >= 1e4 ? 0 : 1) + 'k';
+    return '$' + Math.round(n);
+  }
+  function rate(x) {
+    if (x == null || !isFinite(x)) return '\u2014';
+    if (x >= 1) return '$' + x.toFixed(2);
+    return '$' + x.toFixed(3);
+  }
+  function mtok(v) {
+    if (v == null || !isFinite(v)) return '\u2014';
+    if (v >= 1000) return (v / 1000).toFixed(1) + 'k';
+    if (v >= 100) return v.toFixed(0);
+    if (v >= 10) return v.toFixed(0);
+    return v.toFixed(1);
+  }
+
+  /* ── populate selects ───────────────────────────────── */
+  var SH_MODELS = MODELS.filter(function (m) { return m.selfhost === true; })
+    .concat(typeof SELFHOST_EXTRA !== 'undefined' ? SELFHOST_EXTRA : []);
+  function opt(value, label, selected) {
+    return '<option value="' + value + '"' + (selected ? ' selected' : '') + '>' + label + '</option>';
+  }
+  $('sh-model').innerHTML = SH_MODELS.map(function (m) {
+    var est = THROUGHPUT.some(function (t) { return t.model_id === m.id && t.source === 'est'; });
+    return opt(m.id, m.provider + ' \u00b7 ' + m.name + (est ? ' \u00b7 est. tput' : ''), m.id === 'phi-4-mini');
+  }).join('');
+  (function () {
+    var names = SH_MODELS.map(function (m) { return m.name; });
+    var list = names.length <= 1 ? (names[0] || '') :
+      names.slice(0, -1).join(', ') + (names.length > 2 ? ',' : '') + ' and ' + names[names.length - 1];
+    var el = $('sh-why-models');
+    if (el) el.textContent = list;
+  })();
+  $('sh-gpu').innerHTML = HARDWARE.map(function (h) {
+    return opt(h.id, h.gpu + ' (' + h.vram_gb + 'GB)', h.id === 'l4');
+  }).join('');
+  $('sh-api').innerHTML = opt('__same__', "Same model's API list price", true) +
+    MODELS.map(function (m) { return opt(m.id, m.provider + ' \u00b7 ' + m.name, false); }).join('');
+  if (typeof SELFHOST_SNAPSHOT_DATE !== 'undefined') $('sh-snap-date').textContent = SELFHOST_SNAPSHOT_DATE;
+
+  /* ── owned-GPU helpers ──────────────────────────────── */
+  function fillOwnedFromGpu() {
+    var hw = HARDWARE.find(function (h) { return h.id === $('sh-gpu').value; });
+    if (!hw) return;
+    if (hw.buy_usd != null) $('sh-buy-price').value = hw.buy_usd;
+    if (hw.tdp_w != null) $('sh-tdp').value = hw.tdp_w;
+  }
+  function readOwned() {
+    return {
+      purchaseUsd: Math.max(0, parseFloat($('sh-buy-price').value) || 0),
+      lifeYears: Math.max(0.1, parseFloat($('sh-life').value) || 3),
+      tdpW: Math.max(0, parseFloat($('sh-tdp').value) || 0),
+      usdPerKwh: Math.max(0, parseFloat($('sh-kwh').value) || 0),
+      pue: Math.max(1, parseFloat($('sh-pue').value) || 1),
+      hostingPerMonth: Math.max(0, parseFloat($('sh-hosting').value) || 0)
+    };
+  }
+
+  /* ── chart (inline SVG, no dependency) ──────────────── */
+  function buildChart(model, hw, basis, volIn, volOut, util, minRep, apiRef, rentBe, buyBe, ownedUsdHr) {
+    var tp = THROUGHPUT.find(function (t) { return t.model_id === model.id && t.gpu_id === hw.id; });
+    var priceObj = hw.prices.find(function (p) { return p.basis === basis; });
+    if (!tp || !priceObj) return '';
+    var rentHr = priceObj.usd_hr;
+    var gpr = Math.max(1, Math.floor(tp.gpus_per_replica || 1));  // GPUs per replica (tensor-parallel)
+    var capacity = tp.out_tok_s * 3600 * HOURS * util;            // output tokens / replica / month
+    var ratio = (volIn > 0 && volOut > 0) ? volIn / volOut : 0;
+    var pf = tp.prefill_factor > 0 ? tp.prefill_factor : Infinity;
+    function gpusAt(v) {
+      var oev = (v * 1e6) + (v * ratio * 1e6) / pf;
+      return Math.max(minRep, Math.ceil(oev / capacity)) * gpr;
+    }
+    function rentMonthly(v) { return gpusAt(v) * rentHr * HOURS; }
+    function buyMonthly(v) { return ownedUsdHr ? gpusAt(v) * ownedUsdHr * HOURS : null; }
+    function apiMonthly(v) { return apiRef.input * (v * ratio) + apiRef.output * v; }
+
+    var anchor = Math.max(rentBe || 0, buyBe || 0, volOut);
+    var xMax = anchor > 0 ? anchor * 2.2 : volOut * 2;
+    xMax = Math.max(xMax, volOut * 1.2, 0.5);
+    var N = 160, i, x, yMax = 0;
+    var ptsA = [], ptsR = [], ptsB = [];
+    for (i = 0; i <= N; i++) {
+      x = (xMax * i) / N;
+      yMax = Math.max(yMax, apiMonthly(x), rentMonthly(x));
+      if (ownedUsdHr) yMax = Math.max(yMax, buyMonthly(x));
+    }
+    yMax = yMax > 0 ? yMax * 1.08 : 1;
+
+    var W = 640, H = 300, padL = 58, padR = 16, padT = 14, padB = 34;
+    var pw = W - padL - padR, ph = H - padT - padB;
+    function xp(v) { return padL + (v / xMax) * pw; }
+    function yp(v) { return padT + (1 - v / yMax) * ph; }
+    for (i = 0; i <= N; i++) {
+      x = (xMax * i) / N;
+      ptsA.push(xp(x).toFixed(1) + ',' + yp(apiMonthly(x)).toFixed(1));
+      ptsR.push(xp(x).toFixed(1) + ',' + yp(rentMonthly(x)).toFixed(1));
+      if (ownedUsdHr) ptsB.push(xp(x).toFixed(1) + ',' + yp(buyMonthly(x)).toFixed(1));
+    }
+
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" preserveAspectRatio="xMidYMid meet">';
+    // y gridlines + ticks (0, mid, max)
+    [0, 0.5, 1].forEach(function (f) {
+      var yv = yMax * f, y = yp(yv);
+      s += '<line class="grid" x1="' + padL + '" y1="' + y.toFixed(1) + '" x2="' + (W - padR) + '" y2="' + y.toFixed(1) + '"/>';
+      s += '<text x="' + (padL - 6) + '" y="' + (y + 3).toFixed(1) + '" text-anchor="end">' + moneyTick(yv) + '</text>';
+    });
+    // x ticks
+    [0, 0.5, 1].forEach(function (f) {
+      var xv = xMax * f, x2 = xp(xv);
+      s += '<text x="' + x2.toFixed(1) + '" y="' + (H - padB + 16) + '" text-anchor="middle">' + mtok(xv) + '</text>';
+    });
+    // axes
+    s += '<line class="axis" x1="' + padL + '" y1="' + padT + '" x2="' + padL + '" y2="' + (H - padB) + '"/>';
+    s += '<line class="axis" x1="' + padL + '" y1="' + (H - padB) + '" x2="' + (W - padR) + '" y2="' + (H - padB) + '"/>';
+    // current-volume marker
+    if (volOut > 0 && volOut <= xMax) {
+      var xc = xp(volOut);
+      s += '<line x1="' + xc.toFixed(1) + '" y1="' + padT + '" x2="' + xc.toFixed(1) + '" y2="' + (H - padB) + '" style="stroke:var(--text-muted);stroke-width:1;stroke-dasharray:1 3;opacity:0.7"/>';
+      s += '<text x="' + xc.toFixed(1) + '" y="' + (padT + 9) + '" text-anchor="middle" style="fill:var(--text-muted)">you</text>';
+    }
+    // break-even markers on the API curve (rent = accent, buy = sage)
+    function beMarker(be, col, label, dy) {
+      if (be == null || be > xMax || be <= 0) return '';
+      var xb = xp(be), yb = yp(apiMonthly(be));
+      var t = '<line x1="' + xb.toFixed(1) + '" y1="' + padT + '" x2="' + xb.toFixed(1) + '" y2="' + (H - padB) + '" style="stroke:' + col + ';stroke-width:1;stroke-dasharray:3 3;opacity:0.5"/>';
+      t += '<circle cx="' + xb.toFixed(1) + '" cy="' + yb.toFixed(1) + '" r="3.5" style="fill:' + col + '"/>';
+      t += '<text x="' + Math.min(xb + 5, W - padR - 74).toFixed(1) + '" y="' + (yb + dy).toFixed(1) + '" style="fill:' + col + '">' + label + ' ' + mtok(be) + '</text>';
+      return t;
+    }
+    s += beMarker(buyBe, 'var(--ok)', 'buy B/E', 15);
+    s += beMarker(rentBe, 'var(--accent)', 'rent B/E', -7);
+    // series: API (warn), Buy (sage), Rent (accent) — rent drawn last so it reads on top
+    s += '<polyline fill="none" style="stroke:var(--warn);stroke-width:2" points="' + ptsA.join(' ') + '"/>';
+    if (ownedUsdHr) s += '<polyline fill="none" style="stroke:var(--ok);stroke-width:2" points="' + ptsB.join(' ') + '"/>';
+    s += '<polyline fill="none" style="stroke:var(--accent);stroke-width:2" points="' + ptsR.join(' ') + '"/>';
+    // axis titles
+    s += '<text x="' + (padL + pw / 2) + '" y="' + (H - 2) + '" text-anchor="middle">Monthly output \u00b7 MTok</text>';
+    s += '<text transform="translate(13,' + (padT + ph / 2) + ') rotate(-90)" text-anchor="middle">Monthly $</text>';
+    s += '</svg>';
+    return s;
+  }
+
+  /* ── compute + render ───────────────────────────────── */
+  function recompute() {
+    var model = SH_MODELS.find(function (m) { return m.id === $('sh-model').value; });
+    var hw = HARDWARE.find(function (h) { return h.id === $('sh-gpu').value; });
+    var basis = $('sh-basis').value;
+    var volIn = Math.max(0, parseFloat($('sh-vol-in').value) || 0);
+    var volOut = Math.max(0.0001, parseFloat($('sh-vol-out').value) || 0);
+    var util = (parseFloat($('sh-util').value) || 70) / 100;
+    var minRep = Math.max(1, Math.round(parseFloat($('sh-minrep').value) || 1));
+    var apiSel = $('sh-api').value;
+    var apiRef = (apiSel === '__same__') ? model : MODELS.find(function (m) { return m.id === apiSel; });
+    if (!apiRef) apiRef = model;
+
+    $('sh-util-val').textContent = Math.round(util * 100) + '%';
+
+    var res = selfHostCost(model, hw, basis, volIn, volOut,
+      { utilCeiling: util, minReplicas: minRep, hoursPerMonth: HOURS, includePrefill: true, apiRef: apiRef });
+
+    if (!res.feasible) {
+      $('sh-result').style.display = 'none';
+      $('sh-infeasible').style.display = 'block';
+      $('sh-infeasible').innerHTML = '<strong>Infeasible:</strong> ' + res.reason +
+        '. Pick a larger GPU or a smaller model — only VRAM-feasible, benchmarked pairs are modeled.';
+      lastExport = { feasible: false, reason: res.reason, inputs: { model_id: model.id, gpu_id: hw.id, rental_basis: basis } };
+      return;
+    }
+    $('sh-result').style.display = 'block';
+    $('sh-infeasible').style.display = 'none';
+
+    // owned / buy scenario — same GPUs, amortized effective $/hr
+    var oOpts = readOwned();
+    var oh = ownedHourly(hw, oOpts);
+    var resBuy = oh ? selfHostCost(model, hw, basis, volIn, volOut,
+      { utilCeiling: util, minReplicas: minRep, hoursPerMonth: HOURS, includePrefill: true, apiRef: apiRef,
+        overrideUsdHr: oh.usd_hr, ownedLabel: 'owned' }) : null;
+
+    var ratio = (volIn > 0 && volOut > 0) ? volIn / volOut : 0;
+    var apiAtVol = apiRef.input * (volOut * ratio) + apiRef.output * volOut;
+    var rentMo = res.monthly;
+    var buyMo = resBuy ? resBuy.monthly : null;
+    var rentBe = res.breakeven_volout_mtok;
+    var buyBe = resBuy ? resBuy.breakeven_volout_mtok : null;
+
+    // cheapest of the three at this volume
+    var cands = [{ k: 'api', v: apiAtVol }, { k: 'rent', v: rentMo }];
+    if (buyMo != null) cands.push({ k: 'buy', v: buyMo });
+    var win = cands.filter(function (c) { return isFinite(c.v); })
+                   .sort(function (a, b) { return a.v - b.v; })[0];
+    var winner = win ? win.k : 'api';
+    var winLabel = { api: 'the API', rent: 'renting GPUs', buy: 'buying GPUs' }[winner];
+
+    // headline
+    var head;
+    if (rentBe == null && buyBe == null) {
+      head = 'At your volume (\u2248' + mtok(volOut) + ' MTok out/mo), <strong>the ' + apiRef.name +
+        ' API</strong> stays cheapest across the modeled range \u2014 ' + money(apiAtVol) + '/mo vs ' +
+        money(rentMo) + ' to rent' + (buyMo != null ? ' and ' + money(buyMo) + ' to buy' : '') +
+        '. Self-host capacity is fixed, so it only wins at higher sustained volume.';
+    } else {
+      head = 'At your volume (\u2248' + mtok(volOut) + ' MTok out/mo), <strong>' + winLabel +
+        '</strong> is cheapest \u2014 ' + money(win ? win.v : apiAtVol) + '/mo';
+      var others = [];
+      if (winner !== 'api') others.push(money(apiAtVol) + ' API');
+      if (winner !== 'rent') others.push(money(rentMo) + ' rent');
+      if (winner !== 'buy' && buyMo != null) others.push(money(buyMo) + ' buy');
+      head += others.length ? ' (vs ' + others.join(', ') + ').' : '.';
+      head += ' Vs the ' + apiRef.name + ' API, self-hosting pays off above ';
+      if (rentBe != null && buyBe != null) {
+        head += '\u2248<strong>' + mtok(buyBe) + ' MTok/mo</strong> if you buy, \u2248<strong>' + mtok(rentBe) + ' MTok/mo</strong> if you rent.';
+      } else if (rentBe != null) {
+        head += '\u2248<strong>' + mtok(rentBe) + ' MTok/mo</strong> if you rent (buying never beats the API in range).';
+      } else {
+        head += '\u2248<strong>' + mtok(buyBe) + ' MTok/mo</strong> if you buy (renting never beats the API in range).';
+      }
+    }
+    $('sh-headline').innerHTML = head;
+
+    // cost grid — API / Rent / Buy
+    $('sh-api-monthly').textContent = money(apiAtVol);
+    $('sh-api-sub').textContent = 'vs ' + apiRef.name + ' API \u00b7 ' + mtok(volOut) + ' MTok out';
+    $('sh-rent-monthly').textContent = money(rentMo);
+    $('sh-rent-sub').textContent = res.gpus_needed + '\u00d7 ' + res.gpu + ' \u00b7 rent ' + basis + ' \u00b7 $' + res.usd_hr.toFixed(2) + '/hr';
+    if (buyMo != null) {
+      $('sh-buy-monthly').textContent = money(buyMo);
+      $('sh-buy-sub').textContent = resBuy.gpus_needed + '\u00d7 owned \u00b7 $' + oh.usd_hr.toFixed(2) + '/hr amortized \u00b7 ' + oOpts.lifeYears + 'yr life';
+    } else {
+      $('sh-buy-monthly').textContent = '\u2014';
+      $('sh-buy-sub').textContent = 'set a GPU purchase price above';
+    }
+    // highlight the cheapest cell
+    [['api', 'sh-cell-api'], ['rent', 'sh-cell-rent'], ['buy', 'sh-cell-buy']].forEach(function (p) {
+      $(p[1]).classList.toggle('sh-win', winner === p[0]);
+    });
+
+    // readout
+    $('sh-be-rent').textContent = rentBe == null ? 'none in range' : mtok(rentBe) + ' MTok/mo';
+    $('sh-be-buy').textContent = (buyMo == null) ? '\u2014' : (buyBe == null ? 'none in range' : mtok(buyBe) + ' MTok/mo');
+    $('sh-gpus').innerHTML = res.gpus_needed + (res.gpus_per_replica > 1 ? ' <span class="sh-tag">TP\u00d7' + res.gpus_per_replica + '</span>' : '');
+    $('sh-util-out').textContent = (res.utilization * 100).toFixed(res.utilization < 0.1 ? 1 : 0) + '%';
+    $('sh-tput').innerHTML = res.out_tok_s.toLocaleString() + ' tok/s' + (res.throughput_source === 'est' ? ' <span class="sh-tag">est.</span>' : '');
+
+    // chart
+    $('sh-chart').innerHTML = buildChart(model, hw, basis, volIn, volOut, util, minRep, apiRef, rentBe, buyBe, oh ? oh.usd_hr : null);
+
+    // export payload
+    lastExport = {
+      generated_at: new Date().toISOString(),
+      snapshot_date: res.snapshot_date,
+      schema_version: '0.2',
+      inputs: {
+        model_id: model.id, gpu_id: hw.id, rental_basis: basis,
+        vol_in_mtok: volIn, vol_out_mtok: volOut,
+        util_ceiling: util, min_replicas: minRep, compare_vs: apiRef.id
+      },
+      cheapest_at_volume: winner,
+      api: {
+        compare_vs: apiRef.id, input_usd_per_mtok: apiRef.input, output_usd_per_mtok: apiRef.output,
+        monthly_at_volume_usd: Number(apiAtVol.toFixed(2))
+      },
+      rent: {
+        model_id: res.model_id, gpu_id: res.gpu_id, gpu: res.gpu, vram_gb: res.vram_gb,
+        rental_basis: res.price_basis, cloud: res.cloud, usd_hr: res.usd_hr,
+        precision: res.precision, out_tok_s: res.out_tok_s, throughput_source: res.throughput_source,
+        gpus_needed: res.gpus_needed, gpus_per_replica: res.gpus_per_replica, utilization: res.utilization,
+        monthly_cost_usd: res.monthly, per_mtok_out_usd: res.per_mtok_out,
+        floor_per_mtok_out_usd: res.floor_per_mtok_out,
+        breakeven_volout_mtok: res.breakeven_volout_mtok,
+        delta_vs_api_usd: Number((apiAtVol - res.monthly).toFixed(2))
+      },
+      buy: oh ? {
+        effective_usd_hr: Number(oh.usd_hr.toFixed(4)),
+        usd_hr_breakdown: {
+          card: Number(oh.card_per_hr.toFixed(4)),
+          power: Number(oh.power_per_hr.toFixed(4)),
+          hosting: Number(oh.hosting_per_hr.toFixed(4))
+        },
+        assumptions: {
+          purchase_usd: oh.purchase_usd, life_years: oh.life_years, tdp_w: oh.tdp_w,
+          usd_per_kwh: oh.usd_per_kwh, pue: oh.pue, hosting_per_month: oh.hosting_per_month
+        },
+        gpus_needed: resBuy.gpus_needed, gpus_per_replica: resBuy.gpus_per_replica, utilization: resBuy.utilization,
+        monthly_cost_usd: resBuy.monthly, per_mtok_out_usd: resBuy.per_mtok_out,
+        floor_per_mtok_out_usd: resBuy.floor_per_mtok_out,
+        breakeven_volout_mtok: resBuy.breakeven_volout_mtok,
+        delta_vs_api_usd: Number((apiAtVol - resBuy.monthly).toFixed(2)),
+        delta_vs_rent_usd: Number((res.monthly - resBuy.monthly).toFixed(2))
+      } : null,
+      assumptions: { util_ceiling: util, min_replicas: minRep, hours_per_month: HOURS, include_prefill: true },
+      caveats: [
+        'GPU $/hr, purchase prices and tok/s are illustrative snapshots (see hardware-sources.md), not quotes.',
+        'Rent = GPUs x rental $/hr x 730. Buy = GPUs x (amortized purchase + power x PUE + hosting) x 730.',
+        'Buying only wins if the GPU stays busy at your utilization; idle owned hardware is sunk capital, so at low utilization renting is usually safer.',
+        'spot = preemptible; eviction/restart overhead not modeled.',
+        'throughput varies with precision/batch/sequence length — validate on your traffic.',
+        'excludes engineering time, networking, storage and data egress — these usually dwarf the rent-vs-buy gap at small scale.'
+      ]
+    };
+  }
+
+  /* ── wiring ─────────────────────────────────────────── */
+  ['sh-model', 'sh-basis', 'sh-vol-in', 'sh-vol-out', 'sh-util', 'sh-minrep', 'sh-api',
+   'sh-buy-price', 'sh-life', 'sh-tdp', 'sh-kwh', 'sh-pue', 'sh-hosting'].forEach(function (id) {
+    var el = $(id);
+    el.addEventListener('change', recompute);
+    el.addEventListener('input', recompute);
+  });
+  // GPU change auto-fills purchase price + TDP from the catalog, then recomputes
+  $('sh-gpu').addEventListener('change', function () { fillOwnedFromGpu(); recompute(); });
+
+  $('sh-export').addEventListener('click', function () {
+    if (!lastExport) recompute();
+    var out = $('json-out'), modal = $('json-modal');
+    if (out && modal) {
+      out.textContent = JSON.stringify(lastExport, null, 2);
+      modal.classList.add('open');
+    }
+  });
+
+  // self-test (console only) — rent path + a fixed Buy-mode result
+  try {
+    var pm = SH_MODELS.find(function (m) { return m.id === 'phi-4-mini'; });
+    var l4 = HARDWARE.find(function (h) { return h.id === 'l4'; });
+    var t = selfHostCost(pm, l4, 'spot', 100, 20, { apiRef: pm });
+    var rentOk = t.feasible && t.gpus_needed >= 1 && t.floor_per_mtok_out > 0 && t.breakeven_volout_mtok > 0;
+
+    // Buy mode: known inputs → expected owned $/hr and monthly (L4 owned, every input pinned)
+    var oh = ownedHourly(l4, { purchaseUsd: 2500, lifeYears: 3, tdpW: 72, usdPerKwh: 0.12, pue: 1.5, hostingPerMonth: 250 });
+    var expHr = 2500 / (3 * 8766) + (72 / 1000) * 0.12 * 1.5 + 250 / 730;   // ≈ $0.4505/hr
+    var ohOk = !!oh && Math.abs(oh.usd_hr - expHr) < 1e-9
+      && Math.abs((oh.card_per_hr + oh.power_per_hr + oh.hosting_per_hr) - oh.usd_hr) < 1e-9;
+    var buy = selfHostCost(pm, l4, 'spot', 100, 20, { apiRef: pm, utilCeiling: 0.7, minReplicas: 1, overrideUsdHr: oh.usd_hr, ownedLabel: 'owned' });
+    var expMonthly = Math.round(buy.gpus_needed * oh.usd_hr * 730 * 100) / 100;
+    var buyOk = buy.feasible && buy.cloud === 'owned' && buy.usd_hr === oh.usd_hr
+      && buy.monthly > 0 && Math.abs(buy.monthly - expMonthly) < 1e-9;
+
+    // Catalog wiring: open-weight extras are concatenated into SH_MODELS, and a 70B must NOT fit a 24GB L4
+    var big = selfHostCost(SH_MODELS.find(function (m) { return m.id === 'llama-3.3-70b'; }), l4, 'spot', 50, 10, { apiRef: pm });
+    var catOk = SH_MODELS.length >= 8
+      && !!SH_MODELS.find(function (m) { return m.id === 'llama-3.1-8b'; })
+      && !!big && big.feasible === false;
+
+    // TP×2: Llama 3.3 70B is modeled as 2 cards/replica; on an 80GB H100 it provisions GPUs in pairs,
+    // while a normal model stays single-card (gpus_per_replica defaults to 1)
+    var h100 = HARDWARE.find(function (h) { return h.id === 'h100-80gb'; });
+    var tp = selfHostCost(SH_MODELS.find(function (m) { return m.id === 'llama-3.3-70b'; }), h100, 'spot', 1, 0.2, { apiRef: pm, minReplicas: 1 });
+    var tpOk = !!tp && tp.feasible && tp.gpus_per_replica === 2 && tp.gpus_needed % 2 === 0 && t.gpus_per_replica === 1;
+
+    var ok = rentOk && ohOk && buyOk && catOk && tpOk;
+    console.log('[selfhost self-test] ' + (ok ? 'PASS' : 'FAIL')
+      + ' (rent ' + (rentOk ? 'ok' : 'X') + ', ownedHr ' + (ohOk ? 'ok' : 'X') + ', buy ' + (buyOk ? 'ok' : 'X') + ', catalog ' + (catOk ? 'ok' : 'X') + ', tp ' + (tpOk ? 'ok' : 'X') + ')');
+  } catch (e) { console.log('[selfhost self-test] ERROR ' + e.message); }
+
+  fillOwnedFromGpu();
   recompute();
 })();
 </script>
